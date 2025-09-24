@@ -35,18 +35,17 @@ Requirement RecognizeFaceFR ( 1.4.1 )  { text = "\"O usuário poderá registrar 
 { text = "\"O sistema deve permitir o gerenciamento de pedidos nas mais diversas máquinas e realizar a cobrança automática no método de pagamento registrado.\"" Requirement SelectPreparedFoodFR ( 2.2.1 ) 
 { text = "\"O usuário deve ser capaz de selecionar uma comida a ser preparada no cardápio exibido nos totens e ser capaz de retira-la em um ponto de coleta.\"" } Requirement DispenseCannedBeverage ( 2.2.2 ) 
 { text = "\"O usuário deve ser capaz de selecionar uma bebida em lata na máquina de bebidas e recebê-la.\"" } Requirement DispenseSnackFR ( 2.2.3 ) 
-{ text = "\"O usuário deve ser capaz de selecionar um lanche em máquina e recebê-lo.\"" } Requirement PourBeverageFR ( 2.2.4 ) 
-{ text = "\"O sistema deve permitir que o usuário encha copos de bebidas livremente em máquinas com terneiras e cobre pela quantidade de bebida depositada em ml.\"" } Requirement ChargeOrderFR ( 2.2.5 ) 
-{ text = "\"O sistema deve realizar cobrança automaticamente após o usuário concluir o pedido, a partir dos dados previamente cadastrados no sistema\"" } } } } 
+{ text = "\"O usuário deve ser capaz de selecionar um lanche em máquina e recebê-lo.\"" }  Requirement PourBeverageFR ( 2.2.4 ) 
+{ text = "\"O sistema deve permitir que o usuário encha copos de bebidas livremente em máquinas com terneiras e cobre pela quantidade de bebida depositada em ml.\"" } Requirement ChargeOrderFR ( 2.2.5 ) { text = "\"O sistema deve realizar cobrança automaticamente após o usuário concluir o pedido, a partir dos dados previamente cadastrados no sistema\"" } } } } 
 
 Requirement MonitorMenuAvailabilityFR ( 2.2.1.3 ) { text = "\"O toten de pedido deve receber informações contínuas de quais alimentos estão disponíveis no cardápio.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } 
 
 Requirement MonitorInventoryFR ( 2.2.2.1 ) { text = "\"As máquinas devem ser capazes de monitorar o inventário de lanches e bebidas para evitar o pedido de alimentos não disponíveis.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.DispenseSnackFR , MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.DispenseCannedBeverage ; } 
 
 Requirement CalculateBeverageCostFR ( 2.2.4.1 ) 
-{ text = "\"O sistema deve calcular o valor da bebida baseado nos ml depositados.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement RouteOrderFR ( 2.2.1.2.1 ) 
+{ text = "\"O sistema deve calcular o valor da bebida baseado nos ml depositados.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.PourBeverageFR ; } Requirement RouteOrderFR ( 2.2.1.2.1 ) 
 { text = "\"Encaminhar automaticamente o pedido para a cozinha mais próxima disponível com base na localização do ponto de venda. \"" derive ManagePickupFR.OpenConveyorCompartmentFR.SeparateConveyorItemsFR.GenerateReceiptFR ; } Requirement MeasureBeverageFlowFR ( 2.2.4.1.1 ) 
-{ text = "\"O sistema deve controlar a quantidade de bebida em ml que sai da máquina.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement UpdateOrderStatusFR ( 2.2.1.1.1 ) 
+{ text = "\"O sistema deve controlar a quantidade de bebida em ml que sai da máquina.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.PourBeverageFR ; } Requirement UpdateOrderStatusFR ( 2.2.1.1.1 ) 
 { text = "\"O sistema deve permitir registrar e atualizar o estado de cada pedido (por exemplo: “Em espera”, “Em preparação”, “Pronto para retirada”, “Retirado”), com histórico de alterações.\"" derive ManagePickupFR.TrackOrderFR ; } Requirement ManagePickupFR ( 4 ) 
 { text = "\"O sistema deve gerenciar de forma integrada todo o processo de retirada de pedidos nos pontos de coleta, incluindo exibição de códigos, identificação do usuário, atualização de status e operação da esteira automatizada.\"" Requirement OpenConveyorCompartmentFR ( 4.1 ) 
 { text = "\"O sistema deve permitir que, após a identificação do usuário, a esteira circular e fechada abra automaticamente o compartimento correspondente ao pedido para retirada.\"" Requirement SeparateConveyorItemsFR ( 4.1.2 ) { text = "\"O sistema deve organizar os pedidos na esteira de forma que cada compartimento esteja identificado com o código único do pedido.\"" Requirement GenerateReceiptFR ( 2.2.1.2 ) 
