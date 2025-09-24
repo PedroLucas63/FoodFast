@@ -1,5 +1,5 @@
 Model FoodFastModel ; 
-package SysADL.types { 
+package FoodFast.types { 
 	value type Int { } 
 	value type Boolean { } 
 	value type String { } 
@@ -16,7 +16,7 @@ Requirement RegisterPaymentMethodsFR ( 1.1.2 ) { text = "\"O usuário deve cadas
 
 Requirement AuthenticateWithEmailFR ( 1.3 ) { text = "\"O sistema deve permitir que o usuário se autentique em sua conta com e-mail e senha registrados.\"" } 
  
-Requirement AuthenticateWithBiometricsFR ( 1.4 ) { text = "\"O sistema deve permitir que o usuário se autentique por meio de reconhecimento facial, digital ou QR Code disponível no smartphone.\"" derive newElement.ManageOrdersFR.AuthenticateOrderFR ; 
+Requirement AuthenticateWithBiometricsFR ( 1.4 ) { text = "\"O sistema deve permitir que o usuário se autentique por meio de reconhecimento facial, digital ou QR Code disponível no smartphone.\"" derive MonitorInvoicesFR.ManageOrdersFR.AuthenticateOrderFR ; 
 
 Requirement RecognizeFaceFR ( 1.4.1 )  { text = "\"O usuário poderá registrar sua face no sistema que deve ser capaz de identifica-lo sem erros.\"" Requirement CaptureFaceFR ( 1.4.1.1 ) 
 { text = "\"O sensor de facial deve coletar corretamente a face em análise.\"" } Requirement IdentifyFaceFR ( 1.4.1.2 ) 
@@ -27,7 +27,7 @@ Requirement RecognizeFaceFR ( 1.4.1 )  { text = "\"O usuário poderá registrar 
 { text = "\"O usuário deverá ter acesso a um QRCode em seu dispositivo que deve ser capaz de identifica-lo sem erros.\"" Requirement CaptureQRCodeFR ( 1.4.3.1 ) 
 { text = "\"O sensor de QRCode deve coletar corretamente o código digitalizado na frente dele.\"" } Requirement IdentifyQRCodeFR ( 1.4.3.2 ) 
 { text = "\"O servidor deve receber o código coletado pelo sensor e reconhecer corretamente quem está utilizando.\"" } } } } Requirement UpdateUserFR ( 1.2 ) 
-{ text = "\"O sistema deve permitir que o usuário realize atualize a conta no sistema com todos dados necessários.\"" derive ManageUsersFR.RegisterUserFR ; } Requirement newElement ( 3 ) 
+{ text = "\"O sistema deve permitir que o usuário realize atualize a conta no sistema com todos dados necessários.\"" derive ManageUsersFR.RegisterUserFR ; } Requirement MonitorInvoicesFR ( 3 ) 
 { text = "\"O sistema deve ser capaz de monitorar o valor total das faturas de cada cliente, agrupando-as por dia de consumo.\"" Requirement IdentifyInvoiceDateFR ( 3.1 ) 
 { text = "\"O sistema deve identificar corretamente a data de cada fatura com base no horário local do restaurante.\"" } Requirement ManageOrdersFR ( 2 ) 
 { text = "\"O sistema deve ser capaz de  reconhecer e gerenciar os pedidos do usuário.\"" Requirement AuthenticateOrderFR ( 2.1 ) 
@@ -39,21 +39,21 @@ Requirement RecognizeFaceFR ( 1.4.1 )  { text = "\"O usuário poderá registrar 
 { text = "\"O sistema deve permitir que o usuário encha copos de bebidas livremente em máquinas com terneiras e cobre pela quantidade de bebida depositada em ml.\"" } Requirement ChargeOrderFR ( 2.2.5 ) 
 { text = "\"O sistema deve realizar cobrança automaticamente após o usuário concluir o pedido, a partir dos dados previamente cadastrados no sistema\"" } } } } 
 
-Requirement MonitorMenuAvailabilityFR ( 2.2.1.3 ) { text = "\"O toten de pedido deve receber informações contínuas de quais alimentos estão disponíveis no cardápio.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } 
+Requirement MonitorMenuAvailabilityFR ( 2.2.1.3 ) { text = "\"O toten de pedido deve receber informações contínuas de quais alimentos estão disponíveis no cardápio.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } 
 
-Requirement MonitorInventoryFR ( 2.2.2.1 ) { text = "\"As máquinas devem ser capazes de monitorar o inventário de lanches e bebidas para evitar o pedido de alimentos não disponíveis.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.DispenseSnackFR , newElement.ManageOrdersFR.ProcessOrdersFR.DispenseCannedBeverage ; } 
+Requirement MonitorInventoryFR ( 2.2.2.1 ) { text = "\"As máquinas devem ser capazes de monitorar o inventário de lanches e bebidas para evitar o pedido de alimentos não disponíveis.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.DispenseSnackFR , MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.DispenseCannedBeverage ; } 
 
 Requirement CalculateBeverageCostFR ( 2.2.4.1 ) 
-{ text = "\"O sistema deve calcular o valor da bebida baseado nos ml depositados.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement RouteOrderFR ( 2.2.1.2.1 ) 
+{ text = "\"O sistema deve calcular o valor da bebida baseado nos ml depositados.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement RouteOrderFR ( 2.2.1.2.1 ) 
 { text = "\"Encaminhar automaticamente o pedido para a cozinha mais próxima disponível com base na localização do ponto de venda. \"" derive ManagePickupFR.OpenConveyorCompartmentFR.SeparateConveyorItemsFR.GenerateReceiptFR ; } Requirement MeasureBeverageFlowFR ( 2.2.4.1.1 ) 
-{ text = "\"O sistema deve controlar a quantidade de bebida em ml que sai da máquina.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement UpdateOrderStatusFR ( 2.2.1.1.1 ) 
+{ text = "\"O sistema deve controlar a quantidade de bebida em ml que sai da máquina.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.ChargeOrderFR ; } Requirement UpdateOrderStatusFR ( 2.2.1.1.1 ) 
 { text = "\"O sistema deve permitir registrar e atualizar o estado de cada pedido (por exemplo: “Em espera”, “Em preparação”, “Pronto para retirada”, “Retirado”), com histórico de alterações.\"" derive ManagePickupFR.TrackOrderFR ; } Requirement ManagePickupFR ( 4 ) 
 { text = "\"O sistema deve gerenciar de forma integrada todo o processo de retirada de pedidos nos pontos de coleta, incluindo exibição de códigos, identificação do usuário, atualização de status e operação da esteira automatizada.\"" Requirement OpenConveyorCompartmentFR ( 4.1 ) 
 { text = "\"O sistema deve permitir que, após a identificação do usuário, a esteira circular e fechada abra automaticamente o compartimento correspondente ao pedido para retirada.\"" Requirement SeparateConveyorItemsFR ( 4.1.2 ) { text = "\"O sistema deve organizar os pedidos na esteira de forma que cada compartimento esteja identificado com o código único do pedido.\"" Requirement GenerateReceiptFR ( 2.2.1.2 ) 
-{ text = "\"Gerar nota fiscal ou comprovante contendo código de barras, número do pedido e número do ponto de coleta.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } } Requirement ValidateConveyorDeliveryFR ( 4.1.3 ) { text = "\"O sistema deve garantir que, ao liberar o compartimento, o pedido entregue corresponda exatamente ao código e identificação do usuário.\"" Requirement MoveConveyorFR ( 4.1.3.1 ) 
+{ text = "\"Gerar nota fiscal ou comprovante contendo código de barras, número do pedido e número do ponto de coleta.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } } Requirement ValidateConveyorDeliveryFR ( 4.1.3 ) { text = "\"O sistema deve garantir que, ao liberar o compartimento, o pedido entregue corresponda exatamente ao código e identificação do usuário.\"" Requirement MoveConveyorFR ( 4.1.3.1 ) 
 { text = "\"O sistema deve movimentar a esteira de forma automática para posicionar o compartimento correto na frente do usuário após a identificação.\"" } } Requirement IdentifyUserForPickupFR ( 4.1.1 ) 
 { text = "\"A retirada do pedido só poderá ser realizada mediante a identificação do usuário por reconhecimento facial, digital ou pela apresentação da nota fiscal do pedido.\"" derive VerifyBarcodeFR , ManageUsersFR.AuthenticateWithBiometricsFR ; } } Requirement TrackOrderFR ( 2.2.1.1 ) 
-{ text = "\"O sistema deve disponibilizar uma tela de acompanhamento que apresente ao usuário a lista de pedidos, indicando o status como “em preparo” ou “finalizado”.\"" derive newElement.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } } Requirement VerifyBarcodeFR ( 4.1.1.1.1 ) 
+{ text = "\"O sistema deve disponibilizar uma tela de acompanhamento que apresente ao usuário a lista de pedidos, indicando o status como “em preparo” ou “finalizado”.\"" derive MonitorInvoicesFR.ManageOrdersFR.ProcessOrdersFR.SelectPreparedFoodFR ; } } Requirement VerifyBarcodeFR ( 4.1.1.1.1 ) 
 { text = "\"O pedido do usuário poderá ser identificado pelo código de barras emitido na nota.\"" Requirement IdentifyInvoiceFR ( 4.1.1.1.2 ) 
 { text = "\"O servidor deve receber o código de barras pelo sensor e reconhecer corretamente o pedido.\"" } Requirement CaptureBarcodeFR ( 4.1.1.1.1 ) 
-{ text = "text=\"O sensor de código de barras deve coletar corretamente a código digitalizado na frente dele.\"" } }
+{ text = "text=\"O sensor de código de barras deve coletar corretamente a código digitalizado na frente dele.\"" } } package FoodFastComponents { import FoodFast.types ; import FoodFastPorts ; import FoodFastConnectors ; } package FoodFastPorts { import FoodFast.types ; } package FoodFastConnectors { import FoodFastPorts ; }
