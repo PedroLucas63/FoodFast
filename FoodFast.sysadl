@@ -14,19 +14,16 @@ Requirement RegisterPersonalInfoFR ( 1.1.1 ) { text = "\"O sistema precisa ser c
 
 Requirement RegisterPaymentMethodsFR ( 1.1.2 ) { text = "\"O usuário deve cadastar os métodos de pagamentos.\"" } }
 
-Requirement AuthenticateWithEmailFR ( 1.3 ) { text = "\"O sistema deve permitir que o usuário se autentique em sua conta com e-mail e senha registrados.\"" } 
+Requirement AuthenticateWithCPFFR ( 1.3 ) { text = "\"O sistema deve permitir que o usuário se autentique em sua conta com CPF e senha registrados.\"" } 
  
-Requirement AuthenticateWithBiometricsFR ( 1.4 ) { text = "\"O sistema deve permitir que o usuário se autentique por meio de reconhecimento facial, digital ou QR Code disponível no smartphone.\"" derive MonitorInvoicesFR.ManageOrdersFR.AuthenticateOrderFR ; 
+Requirement AuthenticateWithBiometricsFR ( 1.4 ) { text = "\"O sistema deve permitir que o usuário se autentique por meio de reconhecimento facial ou digital.\"" derive MonitorInvoicesFR.ManageOrdersFR.AuthenticateOrderFR ; 
 
 Requirement RecognizeFaceFR ( 1.4.1 )  { text = "\"O usuário poderá registrar sua face no sistema que deve ser capaz de identifica-lo sem erros.\"" Requirement CaptureFaceFR ( 1.4.1.1 ) 
 { text = "\"O sensor de facial deve coletar corretamente a face em análise.\"" } Requirement IdentifyFaceFR ( 1.4.1.2 ) 
 { text = "\"O servidor deve receber a face coletada pelo sensor e reconhecer corretamente quem está utilizando.\"" } } Requirement RecognizeFingerprintFR ( 1.4.2 ) 
 { text = "\"O usuário poderá registrar sua digital no sistema que deve ser capaz de identifica-lo sem erros.\"" Requirement CaptureFingerprintFR ( 1.4.2.1 ) 
 { text = "\"O sensor de digital deve coletar corretamente a digital sobre ele.\"" } Requirement IdentifyFingerprintFR ( 1.4.2.2 ) 
-{ text = "\"O servidor deve receber a digital coletada pelo sensor e reconhecer corretamente quem está utilizando.\"" } } Requirement RecognizeQRCodeFR ( 1.4.3 ) 
-{ text = "\"O usuário deverá ter acesso a um QRCode em seu dispositivo que deve ser capaz de identifica-lo sem erros.\"" Requirement CaptureQRCodeFR ( 1.4.3.1 ) 
-{ text = "\"O sensor de QRCode deve coletar corretamente o código digitalizado na frente dele.\"" } Requirement IdentifyQRCodeFR ( 1.4.3.2 ) 
-{ text = "\"O servidor deve receber o código coletado pelo sensor e reconhecer corretamente quem está utilizando.\"" } } } } Requirement UpdateUserFR ( 1.2 ) 
+{ text = "\"O servidor deve receber a digital coletada pelo sensor e reconhecer corretamente quem está utilizando.\"" } }  } } Requirement UpdateUserFR ( 1.2 ) 
 { text = "\"O sistema deve permitir que o usuário realize atualize a conta no sistema com todos dados necessários.\"" derive ManageUsersFR.RegisterUserFR ; } Requirement MonitorInvoicesFR ( 3 ) 
 { text = "\"O sistema deve ser capaz de monitorar o valor total das faturas de cada cliente, agrupando-as por dia de consumo.\"" Requirement IdentifyInvoiceDateFR ( 3.1 ) 
 { text = "\"O sistema deve identificar corretamente a data de cada fatura com base no horário local do restaurante.\"" } Requirement ManageOrdersFR ( 2 ) 
