@@ -1,0 +1,378 @@
+Model SysADLModel ;
+
+package SysADLTypes {
+	value type Int { } 
+	value type Boolean { } 
+	value type String { } 
+	value type Void { } 
+	value type Real { } 
+	
+	datatype Date { 
+		attributes : 
+			Day : Int ; 
+			Month : Int ; 
+			Year : Int ;
+	} 
+	datatype DateTime { 
+		
+		attributes : 
+			Date : Date ; 
+			Time : Time ;
+	} 
+	
+	datatype Time { 
+		attributes : 
+			Second : Int ; 
+			Minute : Int ; 
+			Hour : Int ;
+	}
+} 
+
+package FoodFastConnectors { 
+	import FoodFastPorts ;
+} 
+
+package FoodFastComponents { 
+	import FoodFastConnectors ; 
+	import FoodFastPorts ; 
+	import SysADLTypes ;
+} 
+
+package FoodFastPorts { 
+	import SysADLTypes ;
+} 
+
+Requirement ManageUsersFR ( 1 ) { 
+	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
+	
+	Requirement UpdateUserFR ( 1.2 ) { 
+		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" 
+		
+		Requirement RegisterPaymentMethodsFR_ForUpdate ( 1.2.2 ) { 
+			text = "“O sistema deve permitir que o usuário atualize seus métodos de pagamento.”" 
+		} 
+		
+		Requirement RegisterPersonalInfoFR_ForUpdate ( 1.2.1 ) { 
+			text = "“O sistema deve permitir que o usuário atualize suas informações pessoais.”"
+		}
+	}
+	
+	Requirement RegisterUserFR ( 1.1 ) { 
+		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" 
+		
+		Requirement RegisterPersonalInfoFR_ForRegister ( 1.1.1 ) { 
+			text = "“O sistema deve permitir que o usuário cadastre suas informações pessoais.”" 
+		} 
+		
+		Requirement RegisterPaymentMethodsFR_ForRegister ( 1.1.2 ) { 
+			text = "“O sistema deve permitir que o usuário cadastre seus métodos de pagamento.”" 
+		}
+	}
+	
+	Requirement RetrieveUserFR ( 1.3 ) { 
+		text = "“O sistema deve permitir que o usuário visualize suas informações cadastradas.”"
+	} 
+	
+	Requirement DeleteUserFR ( 1.4 ) { 
+		text = "“O sistema deve permitir que o usuário remova sua conta.”"
+	} 
+
+	Requirement LoginUserFR ( 1.5 ) { 
+		text = "\"O sistema deve permitir que o usuário se autentique em sua conta com CPF e senha registrados.\""
+	} 
+} 
+
+ 
+Requirement ManageBiometricDataFR ( 2 ) { 
+	text = "\"O sistema deve permitir o gerenciamento dos dados biométricos dos usuários.\"" 
+	
+	Requirement RegisterBiometricDataFR ( 2.1 ) { 
+		text = "\"O sistema deve permitir que o usuário registre seus dados biométricos no sistema.\""
+	} 
+	
+	Requirement RemoveBiometricDataFR ( 2.2 ) { 
+		text = "\"O sistema deve permitir que o usuário remova seus dados biométricos cadastrados no sistema.\""
+	}
+} 
+
+ 
+Requirement FingerprintAuthenticationFR ( 3.1 ) {
+	text = "\"O sistema deve permitir que o usuário realize autenticação utilizando sua impressão digital.\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR.AuthenticateBiometricFR ; 
+	
+	Requirement CaptureFingerprintFR ( 3.1.1 ) { 
+		text = "\"O sistema deve capturar a impressão digital do usuário utilizando o sensor biométrico apropriado.\""
+	} 
+	
+	Requirement RecognizeFingerprintFR ( 3.1.2 ) { 
+		text = "\"O sistema deve comparar a digital capturada com os dados biométricos registrados para validar a identidade do usuário.\""
+	}
+} 
+
+Requirement FacialAuthenticationFR ( 3.2 ) { 
+	text = "\"O sistema deve permitir que o usuário realize autenticação utilizando reconhecimento facial.\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR.AuthenticateBiometricFR ;
+	
+	Requirement CaptureFaceFR ( 3.2.1 ) { 
+		text = "\"O sistema deve capturar a imagem facial do usuário utilizando a câmera disponibilizada pelo dispositivo.\""
+	} 
+	
+	Requirement RecognizeFaceFR ( 3.2.2 ) { 
+		text = "\"O sistema deve comparar a imagem facial capturada com os dados biométricos registrados para validar a identidade do usuário.\""
+	}
+}
+
+Requirement OrderManagementFR ( 4 ) { 
+	text = "\"O sistema deve permitir o gerenciamento completo dos pedidos realizados pelos usuários.\"" 
+	
+	Requirement UpdateOrderFR ( 4.3 ) { 
+		text = "\"O sistema deve permitir que funcionários ou subsistemas responsáveis atualizem pedidos em processamento.\""
+	}
+	
+	Requirement ViewOrderFR ( 4.2 ) { 
+		text = "\"O sistema deve permitir que o usuário visualize seus pedidos.\""
+	} 
+	
+	Requirement CreateOrderInMachineFR ( 4.1 ) { 
+		text = "\"O sistema deve permitir que o usuário crie pedidos em máquinas apropriadas, realizando o cálculo do valor devido conforme os itens selecionados.\"" 
+		
+		Requirement AuthenticateBiometricFR ( 3 ) { 
+			text = "\"O sistema deve permitir que o usuário realize autenticação por biometria.\""
+			derive OrderPickupFR.IdentifyUserForPickupFR.IdentifyPickupRequestFR ; 
+		} 
+	} 
+	
+	Requirement ProcessOrderFR ( 4.4 ) { 
+		text = "\"O sistema deve processar pedidos conforme o tipo de máquina e o fluxo operacional necessário.\"" 
+		
+		Requirement ChargeOrderFR ( 4.4.1 ) { 
+			text = "\"O sistema deve realizar a cobrança do pedido conforme o fluxo operacional da máquina utilizada, podendo ocorrer antes ou depois do uso, conforme as regras do tipo de pedido.\""
+		} 
+		
+		Requirement CheckPendingPaymentsFR ( 4.4.2 ) { 
+			text = "\"O sistema deve verificar se o usuário possui valores pendentes de pedidos anteriores que ainda não foram pagos, bloqueando a continuidade do processamento caso existam pendências.\""
+		} 
+		
+		Requirement MachineSpecificProcessingFR ( 4.4.3 ) {
+			text = "\"O sistema deve executar o processamento adicional específico ao tipo de máquina na qual o pedido foi realizado.\""
+		}
+	} 
+} 
+
+Requirement CreateOrderInTotenFR ( 4.1.1 ) { 
+	text = "\"O sistema deve permitir que o usuário realize pedidos em totens, selecionando itens que serão preparados na cozinha.\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR ; 
+	
+	Requirement CheckItemAvailabilityFR ( 4.1.1.1 ) { 
+		text = "\"O sistema deve verificar a disponibilidade dos itens selecionados antes de confirmar o pedido.\""
+	} 
+	
+	Requirement GenerateOrderReceiptFR ( 4.1.1.2 ) { 
+		text = "\"O sistema deve gerar a nota de compra contendo o número do pedido, a cozinha de roteamento e o código de barras para retirada.\""
+	} 
+	
+	Requirement ChargeBeforeConfirmationFR ( 4.1.1.3 ) { 
+		text = "\"O sistema deve realizar a cobrança do pedido antes da confirmação final.\""
+	}
+} 
+
+Requirement ProcessOrderFromTotenFR ( 4.4.3.1 ) { 
+	text = "\"O sistema deve processar pedidos realizados em totens, encaminhando-os para a cozinha adequada após a cobrança.\"" 
+	derive OrderManagementFR.ProcessOrderFR.MachineSpecificProcessingFR ; 
+	
+	Requirement RouteOrderToKitchenFR ( 4.4.3.1.1 ) { 
+		text = "\"O sistema deve encaminhar o pedido para a cozinha apropriada conforme sua categoria.\""
+	}
+}
+
+Requirement ProcessOrderFromDrinkDispenserFR ( 4.4.3.2 ) { 
+	text = "\"O sistema deve processar pedidos realizados em máquinas de bebidas prontas, liberando a bebida após a confirmação da cobrança.\"" 
+	derive OrderManagementFR.ProcessOrderFR.MachineSpecificProcessingFR ;
+} 
+
+Requirement ProcessOrderFromSnackDispenserFR ( 4.4.3.3 ) { 
+	text = "\"O sistema deve processar pedidos realizados em máquinas de lanches prontos, liberando o lanche após a confirmação da cobrança.\"" 
+	derive OrderManagementFR.ProcessOrderFR.MachineSpecificProcessingFR ;
+} 
+
+Requirement ProcessOrderFromTapFR ( 4.4.3.4 ) { 
+	text = "\"O sistema deve processar pedidos realizados em torneiras de bebidas cobradas por volume, finalizando o cálculo e cobrança após o uso.\"" 
+	derive OrderManagementFR.ProcessOrderFR.MachineSpecificProcessingFR ; 
+	
+	Requirement CalculateFinalTapCostFR ( 4.4.3.4.1 ) { 
+		text = "\"O sistema deve calcular o custo final do pedido com base no volume total de bebida consumido.\""
+	}
+} 
+
+Requirement CreateOrderInDrinkDispenserFR ( 4.1.2 ) { 
+	text = "\"O sistema deve permitir que o usuário realize pedidos em máquinas de bebidas prontas (dispenser).\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR ; 
+	
+	Requirement CheckDrinkAvailabilityFR ( 4.1.2.1 ) { 
+		text = "\"O sistema deve verificar a disponibilidade da bebida selecionada antes de permitir a confirmação.\""
+	} 
+	
+	Requirement ChargeBeforeConfirmationFR ( 4.1.2.2 ) { 
+		text = "\"O sistema deve realizar a cobrança do pedido antes da liberação da bebida.\""
+	}
+} 
+
+Requirement CreateOrderInSnackDispenserFR ( 4.1.3 ) { 
+	text = "\"O sistema deve permitir que o usuário realize pedidos em máquinas de lanches prontos.\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR ; 
+	
+	Requirement CheckSnackAvailabilityFR ( 4.1.3.1 ) { 
+		text = "\"O sistema deve verificar a disponibilidade do lanche selecionado antes de permitir a confirmação.\""
+	} 
+	
+	Requirement ChargeBeforeConfirmationFR ( 4.1.3.2 ) { 
+		text = "\"O sistema deve realizar a cobrança do pedido antes da liberação do lanche.\""
+	}
+} 
+
+Requirement CreateOrderInTapFR ( 4.1.4 ) { 
+	text = "\"O sistema deve permitir que o usuário realize pedidos em torneiras de bebidas cobradas por volume consumido.\"" 
+	derive OrderManagementFR.CreateOrderInMachineFR ; 
+	
+	Requirement CheckTapAvailabilityFR ( 4.1.4.1 ) { 
+		text = "\"O sistema deve verificar a disponibilidade da bebida na torneira antes ou durante o uso, conforme necessário.\""
+	} 
+	
+	Requirement MeasureDispensedVolumeFR ( 4.1.4.2 ) { 
+		text = "\"O sistema deve medir o volume de bebida dispensado, em mililitros, durante o uso.\""
+	} 
+	
+	Requirement PostUseChargeFR ( 4.1.4.3 ) { 
+		text = "\"O sistema deve realizar a cobrança do pedido somente após o término do uso.\""
+	}
+} 
+
+Requirement OrderPickupFR ( 5 ) { 
+	text = "“O sistema deve gerenciar todo o processo de retirada de pedidos utilizando a esteira automatizada, garantindo identificação segura do usuário, acesso controlado aos compartimentos e rastreabilidade completa do pedido.”" 
+	
+	Requirement ManageConveyorFR ( 5.1 ) { 
+		text = "“O sistema deve gerenciar a esteira automatizada, organizando compartimentos, exibindo pedidos disponíveis e controlando o fluxo de entrega.”" 
+		
+		Requirement SeparateConveyorCompartmentsFR ( 5.1.1 ) { 
+			text = "“O sistema deve organizar a esteira em compartimentos individuais para armazenamento dos pedidos prontos.”"
+		} 
+		
+		Requirement DisplayPickupOrdersFR ( 5.1.2 ) { 
+			text = "“O sistema deve exibir na interface da esteira todos os pedidos disponíveis, pendentes ou em preparação relacionados ao ponto de retirada.”"
+		} 
+		
+		Requirement UpdatePickupOrderStatusFR ( 5.1.3 ) { 
+			text = "“O sistema deve atualizar automaticamente o status do pedido de acordo com o fluxo da esteira e permitir ajustes pelos funcionários.”"
+		}
+	} 
+	
+	Requirement IdentifyUserForPickupFR ( 5.2 ) { 
+		text = "“O sistema deve identificar qual pedido pertence ao usuário no ponto de retirada, utilizando mecanismos de autenticação biométrica ou código de barras.”" 
+		
+		Requirement IdentifyPickupRequestFR ( 5.2.1 ) { 
+			text = "“O sistema deve identificar o pedido associado ao usuário por meio de autenticação informada, como biometria ou código de barras.”"
+		} 
+		
+		Requirement VerifyPickupRequestFR ( 5.2.2 ) { 
+			text = "“O sistema deve verificar se o identificador obtido corresponde a um pedido disponível e autorizado para retirada.”"
+		}
+	}
+	
+	Requirement LocatePickupOrderFR ( 5.3 ) { 
+		text = "“O sistema deve localizar o compartimento onde o pedido identificado está armazenado.”"
+	} 
+	
+	Requirement ProcessConveyorDeliveryFR ( 5.4 ) {
+		text = "“O sistema deve executar as ações necessárias para entregar o pedido ao usuário, incluindo mover a esteira e abrir automaticamente o compartimento correspondente.”" 
+		
+		Requirement MoveConveyorToUserFR ( 5.4.1 ) { 
+			text = "“O sistema deve mover a esteira até que o compartimento do pedido esteja posicionado em frente ao usuário identificado.”"
+		} 
+		
+		Requirement OpenConveyorCompartmentFR ( 5.4.2 ) { 
+			text = "“O sistema deve abrir automaticamente o compartimento correspondente ao pedido após a identificação válida do usuário.”"
+		} 
+		
+		Requirement ConfirmOrderPickupFR ( 5.4.3 ) { 
+			text = "“O sistema deve detectar quando o pedido foi retirado e registrar a conclusão da entrega.”"
+		}
+	} 
+} 
+
+Requirement IdentifyPickupByBarcodeFR ( 5.2.1.1 ) { 
+	text = "“O sistema deve identificar o pedido do usuário utilizando o código de barras fornecido no momento da retirada.”" 
+	derive OrderPickupFR.IdentifyUserForPickupFR.IdentifyPickupRequestFR ; 
+	
+	Requirement CapturePickupBarcodeFR ( 5.2.1.1.1 ) { 
+		text = "“O sistema deve capturar o código de barras apresentado pelo usuário no ponto de retirada.”"
+	} 
+	
+	Requirement InterpretPickupBarcodeFR ( 5.2.1.1.2 ) { 
+		text = "“O sistema deve interpretar o código de barras capturado e extrair o identificador do pedido associado ao usuário.”"
+	}
+}
+
+Requirement QualityNFR ( 6 ) { 
+	text = "“O sistema deve atender requisitos robustos de segurança, desempenho, disponibilidade, usabilidade, escalabilidade e manutenibilidade, com níveis mensuráveis definidos nos NFRs relacionados.”" 
+	
+	Requirement SecurityNFR ( 6.1 ) { 
+		text = "“O sistema deve implementar mecanismos de segurança que previnam acesso não autorizado, garantam criptografia dos dados sensíveis e minimizem riscos de fraude e erros de identificação.”" 
+		
+		Requirement DataSecurityNFR ( 6.1.1 ) { 
+			text = "“Todos os dados sensíveis dos usuários, incluindo informações de pagamento, devem ser armazenados e transmitidos utilizando criptografia forte (mínimo AES-256 ou equivalente).”"
+		} 
+		
+		Requirement FraudSecurityNFR ( 6.1.2 ) { 
+			text = "“O sistema deve detectar e bloquear tentativas suspeitas de fraude durante os processos de autenticação e pagamento, registrando eventos para auditoria.”"
+		} 
+		
+		Requirement RecognitionSecurityNFR ( 6.1.3 ) { 
+			text = "“Os métodos de reconhecimento biométrico devem manter precisão elevada, minimizando falsos positivos e falsos negativos conforme métricas aceitas (FAR < 0.01%, FRR < 1%).”"
+		}
+	} 
+	
+	Requirement PerformanceNFR ( 6.2 ) { 
+		text = "“O sistema deve realizar processamento de dados e atender requisições dentro dos tempos máximos especificados nos NFRs derivados.”" 
+		
+		Requirement RecognitionTimeNFR ( 6.2.1 ) { 
+			text = "“O reconhecimento facial ou digital deve ser concluído em até 3 segundos, considerando captura + processamento.”"
+		} 
+		
+		Requirement PaymentTimeNFR ( 6.2.2 ) {
+			text = "“O sistema deve processar transações de pagamento com tempo de resposta inferior a 5 segundos para cada requisição.”"
+		}
+	} 
+	
+	Requirement AvailableNFR ( 6.3 ) { 
+		text = "“O sistema deve manter disponibilidade mínima de 99,9% ao longo do ano, incluindo totens, máquinas de pedido e esteiras automatizadas.”" 
+		
+		Requirement MachineMonitoringNFR ( 6.3.1 ) { 
+			text = "“Totens, máquinas e módulos de esteira devem ser monitorados constantemente para garantir que permaneçam operacionais, com alertas automáticos em caso de falhas.”"
+		}
+	} 
+	
+	Requirement UsabilityNFR ( 6.4 ) { 
+		text = "“O sistema deve ser intuitivo e fácil de usar para públicos de diferentes idades e perfis, reduzindo a necessidade de intervenção humana.”" 
+		
+		Requirement AccessibilityNFR ( 6.4.1 ) {
+			text = "“Os recursos do sistema devem ser acessíveis a usuários com deficiências auditivas, visuais, motoras ou cognitivas, seguindo diretrizes WCAG 2.1 AA.”" 
+		} 
+		
+		Requirement ResponsivenessNFR ( 6.4.2 ) { 
+			text = "“As interfaces do sistema devem ser responsivas e adaptáveis a diferentes tamanhos e orientações de tela, garantindo boa usabilidade em totens, dispositivos móveis e desktops.”"
+		}
+	} 
+	
+	Requirement ScalabilityNFR ( 6.5 ) { 
+		text = "“O sistema deve suportar aumento de carga, expansão de dispositivos e adição de novas máquinas sem necessidade de alterações estruturais significativas.”"
+	} 
+	
+	Requirement MaintainabilityNFR ( 6.6 ) { 
+		text = "“O sistema deve possuir processos bem definidos de atualização, registro de erros e manutenção corretiva, permitindo intervenções rápidas sem comprometer a operação.”"
+	}
+} 
+
+Requirement CompatibilityNFR ( 6.4.2.1 ) { 
+	text = "“O sistema deve ser compatível com navegadores modernos e sistemas operacionais móveis (iOS e Android).”" 
+	derive QualityNFR.UsabilityNFR.ResponsivenessNFR ;
+}
