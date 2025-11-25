@@ -7,46 +7,376 @@ package SysADLTypes {
 	value type Void { } 
 	value type Real { } 
 	
-	datatype Date { 
-		attributes : 
-			Day : Int ; 
-			Month : Int ; 
-			Year : Int ;
+	dimension Time 
+	
+	unit Second { 
+		dimension = Time
 	} 
-	datatype DateTime { 
-		
-		attributes : 
-			Date : Date ; 
-			Time : Time ;
+	unit Millisecond { 
+		dimension = Time
+	}
+	unit Minute { 
+		dimension = Time
+	} 
+	unit Hour { 
+		dimension = Time
 	} 
 	
-	datatype Time { 
+	dimension Date 
+	
+	unit Day { 
+		dimension = Date
+	} 
+	unit Month { 
+		dimension = Date
+	} 
+	unit Year { 
+		dimension = Date
+	} 
+	
+	value type MillisecondsVT { 
+		unit = Millisecond 
+		dimension = Time
+	} 
+	value type SecondsVT { 
+		unit = Second 
+		dimension = Time
+	} 
+	value type MinutesVT { 
+		unit = Minute 
+		dimension = Time
+	} 
+	value type HoursVT { 
+		unit = Hour 
+		dimension = Time
+	} 
+	
+	value type DaysVT { 
+		unit = Day 
+		dimension = Date
+	} 
+	value type MonthsVT { 
+		unit = Month 
+		dimension = Date
+	} 
+	value type YearsVT { 
+		unit = Year 
+		dimension = Date
+	} 
+	
+	datatype TimestampDT { 
+		attributes : ^value : MillisecondsVT ;
+	} 
+	datatype DateDT { 
 		attributes : 
-			Second : Int ; 
-			Minute : Int ; 
-			Hour : Int ;
-	}
-} 
+			day : DaysVT ;
+			month : MonthsVT ; 
+			year : YearsVT ;
+	} 
+	datatype TimeDT { 
+		attributes : 
+			hour : HoursVT ; 
+			minute : MinutesVT ; 
+			second : SecondsVT ;
+	} 
+	datatype DateTimeDT { 
+		attributes : 
+			date : DateDT ; 
+			time : TimeDT ;
+	} 
+	
+	datatype DBQueryDT { 
+		attributes : 
+			operation : DBOperationEnum ; 
+			target : String ; 
+			content : String ;
+	} 
+	enum DBOperationEnum { 
+		INSERT , 
+		UPDATE , 
+		DELETE , 
+		SELECT
+	} 
+	datatype DBResponseDT { 
+		attributes : 
+			success : Boolean ; 
+			content : String ; 
+			error : String ;
+	} 
+	
+	datatype HTTPHeaderDT { 
+		attributes : 
+			key : String ; 
+			^value : String ;
+	} 
+	enum HTTPMethodEnum { 
+		GET , 
+		POST , 
+		PUT , 
+		DELETE , 
+		PATCH
+	} 
+	datatype HTTPBodyDT { 
+		attributes : 
+			content : String ;
+	} 
+	
+	datatype HTTPRequestDT { 
+		attributes : 
+			method : HTTPMethodEnum ; 
+			path : String ; 
+			header : HTTPHeaderDT ; 
+			^body : HTTPBodyDT ;
+	} 
+	datatype HTTPResponseDT { 
+		attributes : 
+			statusCode : Int ; 
+			header : HTTPHeaderDT ; 
+			^body : HTTPBodyDT ;
+	} 
+}
+
 
 package FoodFastConnectors { 
 	import FoodFastPorts ;
-} 
+	
+	connector def DBQueryCN { 
+		participants : 
+			~ destination : DBQueryIPT ; 
+			~ source : DBQueryOPT ; 
+		flows : 
+			DBQueryDT from source to destination
+	} 
+	
+	connector def DBResponseCN { 
+		participants : 
+			~ destination : DBResponseIPT ; 
+			~ source : DBResponseOPT ; 
+		flows : 
+			DBResponseDT from source to destination
+	} 
+	
+	connector def DatabaseCN { 
+		participants : 
+			~ service : DBServiceP ; 
+			~ client : DBClientP ; 
+		configuration { 
+			connectors : 
+				response : DBResponseCN bindings responseOPT = responseIPT ; 
+				query : DBQueryCN bindings queryOPT = queryIPT ;
+		}
+	} 
+	
+	connector def HTTPRequestCN { 
+		participants : 
+			~ source : HTTPRequestOPT ; 
+			~ destination : HTTPRequestIPT ; 
+			flows : HTTPRequestDT from source to destination
+	} 
+	connector def HTTPResponseCN { 
+		participants : 
+			~ destination : HTTPResponseIPT ; 
+			~ source : HTTPResponseOPT ; 
+			flows : HTTPResponseDT from source to destination
+	} 
+	
+	connector def HTTPCN { 
+		participants : 
+			~ service : HTTPServiceP ; 
+			~ client : HTTPClientP ; 
+			
+			configuration { 
+				connectors : 
+					response : HTTPResponseCN bindings responseOPT = responseIPT ; 
+					request : HTTPRequestCN bindings requestOPT = requestIPT ;
+			}
+	} 
+}
 
 package FoodFastComponents { 
 	import FoodFastConnectors ; 
 	import FoodFastPorts ; 
 	import SysADLTypes ;
+	
+	component def FoodFastARCH { 
+		configuration { 
+			components : 
+				DatabaseCP : DatabaseCP { 
+					using ports : 
+						dbServiceP : DBServiceP ;
+				} 
+				
+				UserServerCP : UserServerCP { 
+					using ports : 
+						dbClient_User : DBClientP ; 
+						httpServer_User : HTTPServiceP ;
+				} 
+				
+				FrontendCP : FrontendCP { 
+					using ports : 
+						httpClient_Frontend : HTTPClientP ;
+				} 
+				
+			connectors : 
+				DB_UserServer : DatabaseCN bindings dbClient_User = dbServiceP ; 
+				Frontend_UserServer : HTTPCN bindings httpServer_User = httpClient_Frontend ;
+		}
+	} boundary
+	
+	component def DatabaseCP { 
+		ports : 
+			dbServiceP : DBServiceP ;
+	}
+	
+	component def UserServerCP { 
+		ports : 
+			dbClient_User : DBClientP ; 
+			httpServer_User : HTTPServiceP ; 
+			
+			configuration { 
+				components : 
+					UserAuthCP : UserAuthCP { 
+						using ports : 
+							httpServer_UserAuth : HTTPServiceP ; 
+							dbClient_UserAuth : DBClientP ;
+					} 
+					
+					UserCreateCP : UserCreateCP { 
+						using ports : 
+							httpServer_UserCreate : HTTPServiceP ; 
+							dbClient_UserCreate : DBClientP ;
+					} 
+					
+					UserDeleteCP : UserDeleteCP { 
+						using ports : 
+							httpServer_UserDelete : HTTPServiceP ; 
+							dbClient_UserDelete : DBClientP ;
+					} 
+					
+					UserUpdateCP : UserUpdateCP { 
+						using ports : httpServer_UserUpdate : HTTPServiceP ; 
+						dbClient_UserUpdate : DBClientP ;
+					} 
+					
+					UserRetrieveCP : UserRetrieveCP { 
+						using ports : 
+							httpServer_UserRetrieve : HTTPServiceP ; 
+							dbClient_UserRetrieve : DBClientP ;
+					} 
+					
+					delegations : 
+						httpServer_UserAuth to httpServer_User
+						httpServer_UserCreate to httpServer_User 
+						httpServer_UserDelete to httpServer_User 
+						httpServer_UserUpdate to httpServer_User 
+						dbClient_UserUpdate to dbClient_User 
+						dbClient_UserDelete to dbClient_User 
+						dbClient_UserCreate to dbClient_User 
+						dbClient_UserRetrieve to dbClient_User 
+						httpServer_UserRetrieve to httpServer_User 
+						dbClient_UserAuth to dbClient_User
+			}
+	} boundary
+	
+	component def UserCreateCP { 
+		ports : 
+			httpServer_UserCreate : HTTPServiceP ; 
+			dbClient_UserCreate : DBClientP ;
+	} boundary
+	
+	component def UserUpdateCP { 
+		ports : 
+			httpServer_UserUpdate : HTTPServiceP ; 
+			dbClient_UserUpdate : DBClientP ;
+	} boundary
+	
+	component def UserRetrieveCP { 
+		ports : 
+			httpServer_UserRetrieve : HTTPServiceP ; 
+			dbClient_UserRetrieve : DBClientP ;
+	} boundary
+	
+	component def UserDeleteCP { 
+		ports : 
+			httpServer_UserDelete : HTTPServiceP ; 
+			dbClient_UserDelete : DBClientP ; 
+			
+			port def DBResponseIPT { 
+				flow in DBResponseDT
+			}
+	} boundary
+	
+	component def UserAuthCP { 
+		ports : 
+			httpServer_UserAuth : HTTPServiceP ; 
+			dbClient_UserAuth : DBClientP ;
+	} boundary
+	
+	component def FrontendCP { 
+		ports : 
+			httpClient_Frontend : HTTPClientP ;
+	} 
 } 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
+	
+	port def DBQueryIPT { 
+		flow in DBQueryDT
+	} 
+	port def DBQueryOPT { 
+		flow out DBQueryDT
+	} 
+	
+	port def DBResponseIPT { 
+		flow in DBResponseDT 
+	} 
+	port def DBResponseOPT { 
+		flow out DBResponseDT
+	} 
+	
+	port def DBServiceP { 
+		ports : 
+			queryIPT : DBQueryIPT ; 
+			responseOPT : DBResponseOPT ;
+	} 
+	port def DBClientP { 
+		ports : 
+			queryOPT : DBQueryOPT ; 
+			responseIPT : DBResponseIPT ;
+	} 
+	
+	port def HTTPRequestIPT { 
+		flow in HTTPRequestDT 
+	} 
+	port def HTTPRequestOPT { 
+		flow out HTTPRequestDT
+	} 
+	
+	port def HTTPResponseIPT { 
+		flow in HTTPResponseDT 
+	}
+	port def HTTPResponseOPT { 
+		flow out HTTPResponseDT
+	} 
+	
+	port def HTTPServiceP {
+		ports : 
+			requestIPT : HTTPRequestIPT ; 
+			responseOPT : HTTPResponseOPT ;
+	} 
+	port def HTTPClientP { 
+		ports : 
+			requestOPT : HTTPRequestOPT ;
+			responseIPT : HTTPResponseIPT ;
+	} 
 } 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
 	
 	Requirement UpdateUserFR ( 1.2 ) { 
-		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" 
+		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" satisfied by FoodFastComponents.UserUpdateCP ; 
 		
 		Requirement RegisterPaymentMethodsFR_ForUpdate ( 1.2.2 ) { 
 			text = "“O sistema deve permitir que o usuário atualize seus métodos de pagamento.”" 
@@ -58,7 +388,7 @@ Requirement ManageUsersFR ( 1 ) {
 	}
 	
 	Requirement RegisterUserFR ( 1.1 ) { 
-		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" 
+		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" satisfied by FoodFastComponents.UserCreateCP ; 
 		
 		Requirement RegisterPersonalInfoFR_ForRegister ( 1.1.1 ) { 
 			text = "“O sistema deve permitir que o usuário cadastre suas informações pessoais.”" 
@@ -71,15 +401,15 @@ Requirement ManageUsersFR ( 1 ) {
 	
 	Requirement RetrieveUserFR ( 1.3 ) { 
 		text = "“O sistema deve permitir que o usuário visualize suas informações cadastradas.”"
-	} 
+	satisfied by FoodFastComponents.UserRetrieveCP ; } 
 	
 	Requirement DeleteUserFR ( 1.4 ) { 
 		text = "“O sistema deve permitir que o usuário remova sua conta.”"
-	} 
+	satisfied by FoodFastComponents.UserDeleteCP ; } 
 
 	Requirement LoginUserFR ( 1.5 ) { 
 		text = "\"O sistema deve permitir que o usuário se autentique em sua conta com CPF e senha registrados.\""
-	} 
+	satisfied by FoodFastComponents.UserAuthCP ; } 
 } 
 
  
