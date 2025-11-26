@@ -134,7 +134,7 @@ package SysADLTypes {
 			header : HTTPHeaderDT ; 
 			^body : HTTPBodyDT ;
 	} 
-}
+enum BiometricTypeEnum { FINGERPRINT , FACE , BARCODE } datatype UserDT { attributes : name : String ; cpf : String ; email : String ; birthdate : DateDT ; phone : String ; } datatype BiometricRawDT { attributes : ^type : BiometricTypeEnum ; data : String ; } }
 
 
 package FoodFastConnectors { 
@@ -191,7 +191,7 @@ package FoodFastConnectors {
 					request : HTTPRequestCN bindings requestOPT = requestIPT ;
 			}
 	} 
-}
+connector def BiometricTypeCN { participants : ~ destination : BiometricTypeIPT ; ~ source : BiometricTypeOPT ; flows : BiometricTypeEnum from source to destination } connector def BiometricRawCN { participants : ~ destination : BiometricRawIPT ; ~ source : BiometricRawOPT ; flows : BiometricRawDT from source to destination } connector def UserCN { participants : ~ destination : UserIPT ; ~ source : UserOPT ; flows : UserDT from source to destination } connector def BooleanCN { participants : ~ destination : BooleanIPT ; ~ source : BooleanOPT ; flows : Boolean from source to destination } }
 
 package FoodFastComponents { 
 	import FoodFastConnectors ; 
@@ -217,15 +217,15 @@ package FoodFastComponents {
 						httpClient_Frontend : HTTPClientP ;
 				} 
 				
-			connectors : 
+			BiometricServerCP : BiometricServerCP { using ports : httpServer_Biometric : HTTPServiceP ; dbClient_Biometric : DBClientP ; } RegisterBiometricTotenCP : RegisterBiometricTotenCP { using ports : httpClient_BiometricToten : HTTPClientP ; } connectors : 
 				DB_UserServer : DatabaseCN bindings dbClient_User = dbServiceP ; 
-				Frontend_UserServer : HTTPCN bindings httpServer_User = httpClient_Frontend ;
-		}
+				
+		DB_BiometricServer : DatabaseCN bindings dbClient_Biometric = dbServiceP ; Front_UserServer : HTTPCN bindings httpClient_Frontend = httpServer_User ; Toten_BiometricServer : HTTPCN bindings httpClient_BiometricToten = httpServer_Biometric ; }
 	} boundary
 	
 	component def DatabaseCP { 
 		ports : 
-			dbServiceP : DBServiceP ;
+			dbServiceP : DBServiceP [ 1 , 2 ] ;
 	}
 	
 	component def UserServerCP { 
@@ -316,7 +316,17 @@ package FoodFastComponents {
 		ports : 
 			httpClient_Frontend : HTTPClientP ;
 	} 
-} 
+boundary
+	component def FingerprintSensorCP { ports : active_Fingerprint : BooleanIPT ; biometricRaw_Fingerprint : BiometricRawOPT ; } boundary
+	component def FaceCameraCP { ports : active_Camera : BooleanIPT ; biometricRaw_Camera : BiometricRawOPT ; }
+	component def RegisterBiometricCP { ports : dbClient_RegisterBiometric : DBClientP ; httpService_RegisterBiometric : HTTPServiceP ; }
+	component def RemoveBiometricCP { ports : httpService_RemoveBiometric : HTTPServiceP ; dbClient_RemoveBiometric : DBClientP ; }
+	component def BiometricRecognitionCP { ports : dbClient_BiometricRecognition : DBClientP ; httpService_BiometricRecognition : HTTPServiceP ; }
+	component def BiometricServerCP { ports : httpServer_Biometric : HTTPServiceP ; dbClient_Biometric : DBClientP ; configuration { components : BiometricRecognitionCP : BiometricRecognitionCP { using ports : dbClient_BiometricRecognition : DBClientP ; httpService_BiometricRecognition : HTTPServiceP ; } RegisterBiometricCP : RegisterBiometricCP { using ports : dbClient_RegisterBiometric : DBClientP ; httpService_RegisterBiometric : HTTPServiceP ; } RemoveBiometricCP : RemoveBiometricCP { using ports : httpService_RemoveBiometric : HTTPServiceP ; dbClient_RemoveBiometric : DBClientP ; } delegations : httpService_BiometricRecognition to httpServer_Biometric httpService_RegisterBiometric to httpServer_Biometric httpService_RemoveBiometric to httpServer_Biometric dbClient_BiometricRecognition to dbClient_Biometric dbClient_RegisterBiometric to dbClient_Biometric dbClient_RemoveBiometric to dbClient_Biometric } }
+	component def BiometricSensorsCP { ports : biometricType : BiometricTypeIPT ; biometricRaw : BiometricRawOPT ; configuration { components : BiometricControllerCP : BiometricControllerCP { using ports : biometricType_Controller : BiometricTypeIPT ; biometricRawIPT_Fingerprint : BiometricRawIPT ; biometricRawIPT_Camera : BiometricRawIPT ; biometricRawOPT_Controller : BiometricRawOPT ; sensorActive_Fingerprint : BooleanOPT ; sensorActive_Camera : BooleanOPT ; } FaceCameraCP : FaceCameraCP { using ports : active_Camera : BooleanIPT ; biometricRaw_Camera : BiometricRawOPT ; } FingerprintSensorCP : FingerprintSensorCP { using ports : active_Fingerprint : BooleanIPT ; biometricRaw_Fingerprint : BiometricRawOPT ; } connectors : activeCamera : BooleanCN bindings sensorActive_Camera = active_Camera ; cameraRaw : BiometricRawCN bindings biometricRaw_Camera = biometricRawIPT_Camera ; fingerprintRaw : BiometricRawCN bindings biometricRaw_Fingerprint = biometricRawIPT_Fingerprint ; activeFingerprint : BooleanCN bindings sensorActive_Fingerprint = active_Fingerprint ; delegations : biometricType_Controller to biometricType biometricRawOPT_Controller to biometricRaw } }
+	component def BiometricControllerCP { ports : biometricType_Controller : BiometricTypeIPT ; biometricRawIPT_Fingerprint : BiometricRawIPT ; biometricRawIPT_Camera : BiometricRawIPT ; biometricRawOPT_Controller : BiometricRawOPT ; sensorActive_Fingerprint : BooleanOPT ; sensorActive_Camera : BooleanOPT ; }
+	component def RegisterBiometricTotenCP { ports : httpClient_BiometricToten : HTTPClientP [ 1 , 2 ] ; configuration { components : RegisterBiometricTotenProcessorCP : RegisterBiometricTotenProcessorCP { using ports : biometricRaw_Sensors : BiometricRawIPT ; httpClient_BiometricTotenProcessor : HTTPClientP ; biometricType_Sensors : BiometricTypeOPT ; } BiometricSensorsCP : BiometricSensorsCP { using ports : biometricType : BiometricTypeIPT ; biometricRaw : BiometricRawOPT ; } connectors : biometricType : BiometricTypeCN bindings biometricType_Sensors = biometricType ; biometricRaw : BiometricRawCN bindings biometricRaw = biometricRaw_Sensors ; delegations : httpClient_BiometricTotenProcessor to httpClient_BiometricToten } }
+	component def RegisterBiometricTotenProcessorCP { ports : biometricRaw_Sensors : BiometricRawIPT ; httpClient_BiometricTotenProcessor : HTTPClientP ; biometricType_Sensors : BiometricTypeOPT ; } } 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
@@ -370,7 +380,7 @@ package FoodFastPorts {
 			requestOPT : HTTPRequestOPT ;
 			responseIPT : HTTPResponseIPT ;
 	} 
-} 
+port def BiometricTypeIPT { flow in BiometricTypeEnum } port def BiometricTypeOPT { flow out BiometricTypeEnum } port def BiometricRawIPT { flow in BiometricRawDT port def BiometricTypeIPT { flow in BiometricTypeEnum } } port def BiometricRawOPT { flow out BiometricRawDT } port def UserIPT { flow in UserDT port def BiometricRawIPT { flow in BiometricRawDT } } port def UserOPT { flow out UserDT } port def BooleanIPT { flow in Boolean } port def BooleanOPT { flow out Boolean } } 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
@@ -418,11 +428,11 @@ Requirement ManageBiometricDataFR ( 2 ) {
 	
 	Requirement RegisterBiometricDataFR ( 2.1 ) { 
 		text = "\"O sistema deve permitir que o usuário registre seus dados biométricos no sistema.\""
-	} 
+	satisfied by FoodFastComponents.RegisterBiometricCP ; } 
 	
 	Requirement RemoveBiometricDataFR ( 2.2 ) { 
 		text = "\"O sistema deve permitir que o usuário remova seus dados biométricos cadastrados no sistema.\""
-	}
+	satisfied by FoodFastComponents.RemoveBiometricCP ; }
 } 
 
  
@@ -432,11 +442,11 @@ Requirement FingerprintAuthenticationFR ( 3.1 ) {
 	
 	Requirement CaptureFingerprintFR ( 3.1.1 ) { 
 		text = "\"O sistema deve capturar a impressão digital do usuário utilizando o sensor biométrico apropriado.\""
-	} 
+	satisfied by FoodFastComponents.FingerprintSensorCP ; } 
 	
 	Requirement RecognizeFingerprintFR ( 3.1.2 ) { 
 		text = "\"O sistema deve comparar a digital capturada com os dados biométricos registrados para validar a identidade do usuário.\""
-	}
+	satisfied by FoodFastComponents.BiometricRecognitionCP ; }
 } 
 
 Requirement FacialAuthenticationFR ( 3.2 ) { 
@@ -445,11 +455,11 @@ Requirement FacialAuthenticationFR ( 3.2 ) {
 	
 	Requirement CaptureFaceFR ( 3.2.1 ) { 
 		text = "\"O sistema deve capturar a imagem facial do usuário utilizando a câmera disponibilizada pelo dispositivo.\""
-	} 
+	satisfied by FoodFastComponents.FaceCameraCP ; } 
 	
 	Requirement RecognizeFaceFR ( 3.2.2 ) { 
 		text = "\"O sistema deve comparar a imagem facial capturada com os dados biométricos registrados para validar a identidade do usuário.\""
-	}
+	satisfied by FoodFastComponents.BiometricRecognitionCP ; }
 }
 
 Requirement OrderManagementFR ( 4 ) { 
