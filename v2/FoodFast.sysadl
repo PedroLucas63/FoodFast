@@ -134,8 +134,94 @@ package SysADLTypes {
 			header : HTTPHeaderDT ; 
 			^body : HTTPBodyDT ;
 	} 
-enum BiometricTypeEnum { FINGERPRINT , FACE , BARCODE } datatype UserDT { attributes : name : String ; cpf : String ; email : String ; birthdate : DateDT ; phone : String ; } datatype BiometricRawDT { attributes : ^type : BiometricTypeEnum ; data : String ; } }
-
+	
+	enum BiometricTypeEnum { 
+		FINGERPRINT , 
+		FACE , 
+		BARCODE
+	} 
+	
+	datatype UserDT { 
+		attributes : 
+			name : String ; 
+			cpf : String ; 
+			email : String ; 
+			birthdate : DateDT ; 
+			phone : String ;
+	id : Int ; } 
+	
+	datatype BiometricRawDT { 
+		attributes : 
+			^type : BiometricTypeEnum ; 
+			data : String ;
+	} 
+	
+	enum ProductCategoryEnum { 
+		SNACK , 
+		DRINK_PACKAGED , 
+		DRINK_TAP , 
+		MEAL
+	} 
+	
+	datatype ProductDT { 
+		attributes : 
+			id : Int ; 
+			name : String ; 
+			description : String ; 
+			category : ProductCategoryEnum ; 
+			price : Real ;
+	} 
+	
+	datatype ProductArrayDT { }
+	 
+	datatype StockInfoDT {
+		attributes : 
+			productId : Int ; 
+			quantity : Int ; 
+			lastUpdate : DateTimeDT ;
+	} 
+	
+	enum MachineTypeEnum { 
+		TOTEM , 
+		DISPENSER , 
+		TAP
+	} 
+	
+	enum PaymentStatusEnum {
+		PENDING , 
+		AUTHORIZED , 
+		CANCELED
+	} 
+	
+	enum OrderStatusEnum { 
+		CREATED , 
+		PROCESSING , 
+		READY , 
+		FINISHED, 
+		CANCELED
+	} 
+	
+	datatype OrderItemDT { 
+		attributes : 
+			productId : Int ;
+		 	quantity : Int ; 
+		 	unitPrice : Real ;
+	} 
+	
+	datatype OrderDT { 
+		attributes : 
+			orderId : Int ; 
+			customerId : Int ; 
+			createdAt : DateTimeDT ; 
+			updatedAt : DateTimeDT ; 
+			machineType : MachineTypeEnum ; 
+			paymentStatus : PaymentStatusEnum ; 
+			orderStatus : OrderStatusEnum ; 
+			items : OrderItemArrayDT ;
+	} 
+	
+	datatype OrderItemArrayDT { } 
+}
 
 package FoodFastConnectors { 
 	import FoodFastPorts ;
@@ -171,13 +257,15 @@ package FoodFastConnectors {
 		participants : 
 			~ source : HTTPRequestOPT ; 
 			~ destination : HTTPRequestIPT ; 
-			flows : HTTPRequestDT from source to destination
+		flows : 
+			HTTPRequestDT from source to destination
 	} 
 	connector def HTTPResponseCN { 
 		participants : 
 			~ destination : HTTPResponseIPT ; 
 			~ source : HTTPResponseOPT ; 
-			flows : HTTPResponseDT from source to destination
+		flows : 
+			HTTPResponseDT from source to destination
 	} 
 	
 	connector def HTTPCN { 
@@ -191,7 +279,78 @@ package FoodFastConnectors {
 					request : HTTPRequestCN bindings requestOPT = requestIPT ;
 			}
 	} 
-connector def BiometricTypeCN { participants : ~ destination : BiometricTypeIPT ; ~ source : BiometricTypeOPT ; flows : BiometricTypeEnum from source to destination } connector def BiometricRawCN { participants : ~ destination : BiometricRawIPT ; ~ source : BiometricRawOPT ; flows : BiometricRawDT from source to destination } connector def UserCN { participants : ~ destination : UserIPT ; ~ source : UserOPT ; flows : UserDT from source to destination } connector def BooleanCN { participants : ~ destination : BooleanIPT ; ~ source : BooleanOPT ; flows : Boolean from source to destination } }
+	
+	connector def BiometricTypeCN { 
+		participants : 
+			~ destination : BiometricTypeIPT ; 
+			~ source : BiometricTypeOPT ; 
+		flows : 
+			BiometricTypeEnum from source to destination
+	} 
+	
+	connector def BiometricRawCN { 
+		participants : 
+			~ destination : BiometricRawIPT ;
+			~ source : BiometricRawOPT ; 
+		flows : 
+			BiometricRawDT from source to destination
+	} 
+	
+	connector def UserCN { 
+		participants : 
+			~ destination : UserIPT ; 
+			~ source : UserOPT ; 
+		flows : 
+			UserDT from source to destination
+	} 
+	
+	connector def BooleanCN { 
+		participants : 
+			~ destination : BooleanIPT ; 
+			~ source : BooleanOPT ; 
+		flows : 
+			Boolean from source to destination
+	} 
+	
+	connector def SensorCN { 
+		participants : 
+			~ client : HTTPClientP ; 
+			~ server : SensorCN ; 
+			
+			configuration { 
+				connectors : 
+					httpToBiometricType : HTTPToBiometricTypeCN bindings requestOPT = biometricType ; 
+					biometricRawToHTTP : BiometricRawToHTTPCN bindings biometriRaw = responseIPT ;
+			}
+	} 
+	
+	connector def HTTPToBiometricTypeCN { 
+		participants : 
+			~ source : HTTPRequestOPT ; 
+			~ destination : BiometricTypeIPT ; 
+			
+		flows : 
+			HTTPRequestDT from source to destination
+	} 
+	
+	connector def BiometricRawToHTTPCN { 
+		participants : 
+			~ source : BiometricRawOPT ; 
+			~ destination : HTTPResponseIPT ; 
+			
+		flows : 
+			BiometricRawDT from source to destination
+	} 
+	
+	connector def StringCN { 
+		participants : 
+			~ destination : StringIPT ; 
+			~ source : StringOPT ; 
+		
+		flows : 
+			String from source to destination
+	} 
+}
 
 package FoodFastComponents { 
 	import FoodFastConnectors ; 
@@ -217,13 +376,49 @@ package FoodFastComponents {
 						httpClient_Frontend : HTTPClientP ;
 				} 
 				
-			BiometricServerCP : BiometricServerCP { using ports : httpServer_Biometric : HTTPServiceP ; dbClient_Biometric : DBClientP ; } RegisterBiometricTotenCP : RegisterBiometricTotenCP { using ports : httpClient_BiometricToten : HTTPClientP ; } connectors : 
-				DB_UserServer : DatabaseCN bindings dbClient_User = dbServiceP ; 
+				BiometricServerCP : BiometricServerCP { 
+					using ports : 
+						httpServer_Biometric : HTTPServiceP ; 
+						dbClient_Biometric : DBClientP ;
+				} 
 				
-		DB_BiometricServer : DatabaseCN bindings dbClient_Biometric = dbServiceP ; Front_UserServer : HTTPCN bindings httpClient_Frontend = httpServer_User ; Toten_BiometricServer : HTTPCN bindings httpClient_BiometricToten = httpServer_Biometric ; }
-	} boundary
+				RegisterBiometricTotenCP : RegisterBiometricTotemCP { 
+					using ports : 
+						httpClient_BiometricToten : HTTPClientP ;
+				} 
+				
+				AdminFrontendCP : AdminFrontendCP { 
+					using ports : 
+						httpClient_AdminFrontend : HTTPClientP ;
+				} 
+				
+				ProductServerCP : ProductServerCP { 
+					using ports : 
+						httpServer_Product_private : HTTPServiceP ; 
+						httpServer_Product_public : HTTPServiceP ; 
+						dbClient_Product : DBClientP ;
+				} 
+				
+			OrderServerCP : OrderServerCP { 
+				using ports : 
+					httpServer_Order_private : HTTPServiceP ; 
+					httpServer_Order_public : HTTPServiceP ; 
+					dbClient_Order : DBClientP ;
+			} 
+			
+			connectors : 
+				DB_UserServer : DatabaseCN bindings dbClient_User = dbServiceP ; 
+				DB_BiometricServer : DatabaseCN bindings dbClient_Biometric = dbServiceP ; 
+				Front_UserServer : HTTPCN bindings httpClient_Frontend = httpServer_User ; 
+				Toten_BiometricServer : HTTPCN bindings httpClient_BiometricToten = httpServer_Biometric ; 
+				DB_ProductServer : DatabaseCN bindings dbClient_Product = dbServiceP ; 
+				FrontAdmin_ProductServer : HTTPCN bindings httpClient_AdminFrontend = httpServer_Product_private ; 
+				DB_OrderServer : DatabaseCN bindings dbClient_Order = dbServiceP ; 
+				Front_OrderServer : HTTPCN bindings httpClient_Frontend = httpServer_Order_public ; 
+		}
+	} 
 	
-	component def DatabaseCP { 
+	boundary component def DatabaseCP { 
 		ports : 
 			dbServiceP : DBServiceP [ 1 , 2 ] ;
 	}
@@ -276,27 +471,27 @@ package FoodFastComponents {
 						httpServer_UserRetrieve to httpServer_User 
 						dbClient_UserAuth to dbClient_User
 			}
-	} boundary
+	}
 	
-	component def UserCreateCP { 
+	boundary component def UserCreateCP { 
 		ports : 
 			httpServer_UserCreate : HTTPServiceP ; 
 			dbClient_UserCreate : DBClientP ;
-	} boundary
+	} 
 	
-	component def UserUpdateCP { 
+	boundary component def UserUpdateCP { 
 		ports : 
 			httpServer_UserUpdate : HTTPServiceP ; 
 			dbClient_UserUpdate : DBClientP ;
-	} boundary
+	} 
 	
-	component def UserRetrieveCP { 
+	boundary component def UserRetrieveCP { 
 		ports : 
 			httpServer_UserRetrieve : HTTPServiceP ; 
 			dbClient_UserRetrieve : DBClientP ;
-	} boundary
+	} 
 	
-	component def UserDeleteCP { 
+	boundary component def UserDeleteCP { 
 		ports : 
 			httpServer_UserDelete : HTTPServiceP ; 
 			dbClient_UserDelete : DBClientP ; 
@@ -304,29 +499,293 @@ package FoodFastComponents {
 			port def DBResponseIPT { 
 				flow in DBResponseDT
 			}
-	} boundary
+	} 
 	
-	component def UserAuthCP { 
+	boundary component def UserAuthCP { 
 		ports : 
 			httpServer_UserAuth : HTTPServiceP ; 
 			dbClient_UserAuth : DBClientP ;
-	} boundary
-	
-	component def FrontendCP { 
-		ports : 
-			httpClient_Frontend : HTTPClientP ;
 	} 
-boundary
-	component def FingerprintSensorCP { ports : active_Fingerprint : BooleanIPT ; biometricRaw_Fingerprint : BiometricRawOPT ; } boundary
-	component def FaceCameraCP { ports : active_Camera : BooleanIPT ; biometricRaw_Camera : BiometricRawOPT ; }
-	component def RegisterBiometricCP { ports : dbClient_RegisterBiometric : DBClientP ; httpService_RegisterBiometric : HTTPServiceP ; }
-	component def RemoveBiometricCP { ports : httpService_RemoveBiometric : HTTPServiceP ; dbClient_RemoveBiometric : DBClientP ; }
-	component def BiometricRecognitionCP { ports : dbClient_BiometricRecognition : DBClientP ; httpService_BiometricRecognition : HTTPServiceP ; }
-	component def BiometricServerCP { ports : httpServer_Biometric : HTTPServiceP ; dbClient_Biometric : DBClientP ; configuration { components : BiometricRecognitionCP : BiometricRecognitionCP { using ports : dbClient_BiometricRecognition : DBClientP ; httpService_BiometricRecognition : HTTPServiceP ; } RegisterBiometricCP : RegisterBiometricCP { using ports : dbClient_RegisterBiometric : DBClientP ; httpService_RegisterBiometric : HTTPServiceP ; } RemoveBiometricCP : RemoveBiometricCP { using ports : httpService_RemoveBiometric : HTTPServiceP ; dbClient_RemoveBiometric : DBClientP ; } delegations : httpService_BiometricRecognition to httpServer_Biometric httpService_RegisterBiometric to httpServer_Biometric httpService_RemoveBiometric to httpServer_Biometric dbClient_BiometricRecognition to dbClient_Biometric dbClient_RegisterBiometric to dbClient_Biometric dbClient_RemoveBiometric to dbClient_Biometric } }
-	component def BiometricSensorsCP { ports : biometricType : BiometricTypeIPT ; biometricRaw : BiometricRawOPT ; configuration { components : BiometricControllerCP : BiometricControllerCP { using ports : biometricType_Controller : BiometricTypeIPT ; biometricRawIPT_Fingerprint : BiometricRawIPT ; biometricRawIPT_Camera : BiometricRawIPT ; biometricRawOPT_Controller : BiometricRawOPT ; sensorActive_Fingerprint : BooleanOPT ; sensorActive_Camera : BooleanOPT ; } FaceCameraCP : FaceCameraCP { using ports : active_Camera : BooleanIPT ; biometricRaw_Camera : BiometricRawOPT ; } FingerprintSensorCP : FingerprintSensorCP { using ports : active_Fingerprint : BooleanIPT ; biometricRaw_Fingerprint : BiometricRawOPT ; } connectors : activeCamera : BooleanCN bindings sensorActive_Camera = active_Camera ; cameraRaw : BiometricRawCN bindings biometricRaw_Camera = biometricRawIPT_Camera ; fingerprintRaw : BiometricRawCN bindings biometricRaw_Fingerprint = biometricRawIPT_Fingerprint ; activeFingerprint : BooleanCN bindings sensorActive_Fingerprint = active_Fingerprint ; delegations : biometricType_Controller to biometricType biometricRawOPT_Controller to biometricRaw } }
-	component def BiometricControllerCP { ports : biometricType_Controller : BiometricTypeIPT ; biometricRawIPT_Fingerprint : BiometricRawIPT ; biometricRawIPT_Camera : BiometricRawIPT ; biometricRawOPT_Controller : BiometricRawOPT ; sensorActive_Fingerprint : BooleanOPT ; sensorActive_Camera : BooleanOPT ; }
-	component def RegisterBiometricTotenCP { ports : httpClient_BiometricToten : HTTPClientP [ 1 , 2 ] ; configuration { components : RegisterBiometricTotenProcessorCP : RegisterBiometricTotenProcessorCP { using ports : biometricRaw_Sensors : BiometricRawIPT ; httpClient_BiometricTotenProcessor : HTTPClientP ; biometricType_Sensors : BiometricTypeOPT ; } BiometricSensorsCP : BiometricSensorsCP { using ports : biometricType : BiometricTypeIPT ; biometricRaw : BiometricRawOPT ; } connectors : biometricType : BiometricTypeCN bindings biometricType_Sensors = biometricType ; biometricRaw : BiometricRawCN bindings biometricRaw = biometricRaw_Sensors ; delegations : httpClient_BiometricTotenProcessor to httpClient_BiometricToten } }
-	component def RegisterBiometricTotenProcessorCP { ports : biometricRaw_Sensors : BiometricRawIPT ; httpClient_BiometricTotenProcessor : HTTPClientP ; biometricType_Sensors : BiometricTypeOPT ; } } 
+	
+	boundary component def FrontendCP { 
+		ports : 
+			httpClient_Frontend : HTTPClientP [ 1 , 2 ] ;
+	} 
+	
+	boundary component def FingerprintSensorCP { 
+		ports : 
+			active_Fingerprint : BooleanIPT ; 
+			biometricRaw_Fingerprint : BiometricRawOPT ;
+	} 
+	
+	boundary component def FaceCameraCP { 
+		ports : 
+			active_Camera : BooleanIPT ; 
+			biometricRaw_Camera : BiometricRawOPT ;
+	} boundary
+	component def RegisterBiometricCP { 
+		ports : 
+			dbClient_RegisterBiometric : DBClientP ; 
+			httpService_RegisterBiometric : HTTPServiceP ;
+	} boundary
+	component def RemoveBiometricCP { 
+		ports : 
+			httpService_RemoveBiometric : HTTPServiceP ; 
+			dbClient_RemoveBiometric : DBClientP ;
+	} boundary
+	component def BiometricRecognitionCP { 
+		ports : 
+			dbClient_BiometricRecognition : DBClientP ; 
+			httpService_BiometricRecognition : HTTPServiceP ;
+	}
+	
+	component def BiometricServerCP { 
+		ports : 
+			httpServer_Biometric : HTTPServiceP ; 
+			dbClient_Biometric : DBClientP ; 
+		configuration { 
+			components : 
+				BiometricRecognitionCP : BiometricRecognitionCP { 
+					using ports : 
+						dbClient_BiometricRecognition : DBClientP ; 
+						httpService_BiometricRecognition : HTTPServiceP ;
+				} 
+				
+				RegisterBiometricCP : RegisterBiometricCP { 
+					using ports : 
+						dbClient_RegisterBiometric : DBClientP ; 
+						httpService_RegisterBiometric : HTTPServiceP ;
+				} 
+				
+				RemoveBiometricCP : RemoveBiometricCP { 
+					using ports : 
+						httpService_RemoveBiometric : HTTPServiceP ; 
+						dbClient_RemoveBiometric : DBClientP ;
+				} 
+				
+				delegations : 
+					httpService_BiometricRecognition to httpServer_Biometric
+					httpService_RegisterBiometric to httpServer_Biometric
+					httpService_RemoveBiometric to httpServer_Biometric
+					dbClient_BiometricRecognition to dbClient_Biometric
+					dbClient_RegisterBiometric to dbClient_Biometric
+					dbClient_RemoveBiometric to dbClient_Biometric
+		}
+		
+	}
+	
+	component def BiometricSensorsCP { 
+		ports : 
+			sensors_Component : SensorCN ; 
+		 
+		configuration { 
+			components : 
+				BiometricControllerCP : BiometricControllerCP { 
+					using ports : 
+						biometricRawIPT_Fingerprint : BiometricRawIPT ; 
+						biometricRawIPT_Camera : BiometricRawIPT ; 
+						sensorActive_Fingerprint : BooleanOPT ; 
+						sensorActive_Camera : BooleanOPT ; 
+						sensors_Controller : SensorCN ;
+				} 
+				
+				FaceCameraCP : FaceCameraCP { 
+					using ports : 
+						active_Camera : BooleanIPT ; 
+						biometricRaw_Camera : BiometricRawOPT ;
+				} 
+				
+				FingerprintSensorCP : FingerprintSensorCP { 
+					using ports : 
+						active_Fingerprint : BooleanIPT ; 
+						biometricRaw_Fingerprint : BiometricRawOPT ;
+				} 
+				
+			connectors : 
+				biometricRaw_Camera : BiometricRawCN bindings biometricRaw_Camera = biometricRawIPT_Fingerprint ; 
+				activeCamera : BooleanCN bindings sensorActive_Fingerprint = active_Camera ; 
+				biometricRaw_FingerPrint : BiometricRawCN bindings biometricRaw_Fingerprint = biometricRawIPT_Camera ; 
+				activeFingerprint : BooleanCN bindings active_Fingerprint = sensorActive_Camera ; 
+			delegations : 
+				sensors_Controller to sensors_Component 
+		}
+	}
+	
+	component def BiometricControllerCP { 
+		ports : 
+			 
+			biometricRawIPT_Fingerprint : BiometricRawIPT ; 
+			biometricRawIPT_Camera : BiometricRawIPT ; 
+			 
+			sensorActive_Fingerprint : BooleanOPT ; 
+			sensorActive_Camera : BooleanOPT ;
+	sensors_Controller : SensorCN ; }
+	
+	component def RegisterBiometricTotemCP { 
+		ports : 
+			httpClient_BiometricTotem : HTTPClientP [ 1 , 2 ] ; 
+		configuration { 
+			components : 
+				BiometricTotenProcessorCP : BiometricTotemProcessorCP { 
+					using ports : 
+						httpClient_BiometricTotenProcessor_external : HTTPClientP ; 
+						httpClient_BiometricTotenProcessor_internal : HTTPClientP ; 
+						cpfString_BiometricToten : StringIPT ;
+				} 
+				
+				KeywordCP : KeywordCP { 
+					using ports : keywordOutput : StringOPT ;
+				} 
+				
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : sensors_Component : SensorCN ;
+				} 
+			
+			connectors : 
+				cpfConnector : StringCN bindings keywordOutput = cpfString_BiometricToten ; 
+				sensorData : SensorCN bindings httpClient_BiometricTotenProcessor_internal = sensors_Component ;
+				
+			delegations : 
+				httpClient_BiometricTotenProcessor_external to httpClient_BiometricTotem }
+	}
+	
+	component def ProductServerCP { 
+		ports : 
+			httpServer_Product_private : HTTPServiceP ; 
+			httpServer_Product_public : HTTPServiceP ; 
+			dbClient_Product : DBClientP ; 
+		configuration { 
+			components : 
+				CreateProductCP : CreateProductCP { 
+					using ports : 
+						httpServer_CreateProduct : HTTPServiceP ; 
+						dbClient_CreateProduct : DBClientP ;
+				} 
+				
+				UpdateProductCP : UpdateProductCP { 
+					using ports : 
+						httpServer_UpdateProduct : HTTPServiceP ; 
+						dbClient_UpdateProduct : DBClientP ;
+				} 
+				
+				DeleteProductCP : DeleteProductCP { 
+					using ports : 
+						httpServer_DeleteProduct : HTTPServiceP ; 
+						dbClient_DeleteProduct : DBClientP ;
+				} 
+				
+				RetrieveProductCP : RetrieveProductCP { 
+					using ports : 
+						httpServer_RetrieveProduct : HTTPServiceP ; 
+						dbClient_RetrieveProduct : DBClientP ;
+				} 
+				
+				CheckAvailabilityProductCP : CheckAvailabilityProductCP { 
+					using ports : 
+						httpServer_CheckAvailabilityProduct : HTTPServiceP ; 
+						dbClient_CheckAvailabilityProduct : DBClientP ;
+				} 
+			
+			delegations : 
+				httpServer_CreateProduct to httpServer_Product_private
+				dbClient_CreateProduct to dbClient_Product
+				httpServer_UpdateProduct to httpServer_Product_private
+				dbClient_UpdateProduct to dbClient_Product
+				httpServer_DeleteProduct to httpServer_Product_private
+				dbClient_DeleteProduct to dbClient_Product
+				httpServer_RetrieveProduct to httpServer_Product_private
+				httpServer_RetrieveProduct to httpServer_Product_public
+				dbClient_RetrieveProduct to dbClient_Product
+				dbClient_CheckAvailabilityProduct to dbClient_Product
+				httpServer_CheckAvailabilityProduct to httpServer_Product_private
+				httpServer_CheckAvailabilityProduct to httpServer_Product_public
+		}
+	} 
+	
+	boundary component def AdminFrontendCP { 
+		ports : httpClient_AdminFrontend : HTTPClientP ;
+	} 
+	
+	boundary component def CreateProductCP { 
+		ports : 
+			httpServer_CreateProduct : HTTPServiceP ; 
+			dbClient_CreateProduct : DBClientP ; 
+	} 
+	
+	boundary component def UpdateProductCP { 
+		ports : 
+			httpServer_UpdateProduct : HTTPServiceP ; 
+			dbClient_UpdateProduct : DBClientP ; 
+	} 
+	
+	boundary component def DeleteProductCP { 
+		ports : 
+			httpServer_DeleteProduct : HTTPServiceP ; 
+			dbClient_DeleteProduct : DBClientP ;
+	} 
+	
+	boundary component def RetrieveProductCP { 
+		ports : 
+			httpServer_RetrieveProduct : HTTPServiceP ; 
+			dbClient_RetrieveProduct : DBClientP ;
+	}
+	
+	boundary component def CheckAvailabilityProductCP { 
+		ports : 
+			httpServer_CheckAvailabilityProduct : HTTPServiceP ; 
+			dbClient_CheckAvailabilityProduct : DBClientP ;
+	}
+	
+	component def BiometricTotemProcessorCP { 
+		ports : 
+			httpClient_BiometricTotemProcessor_external : HTTPClientP ; 
+			httpClient_BiometricTotemProcessor_internal : HTTPClientP ; cpfString_BiometricTotem : StringIPT ;
+	} 
+	
+	boundary component def KeywordCP { 
+		ports : keywordOutput : StringOPT ;
+	}
+	
+	component def OrderServerCP { 
+		ports : 
+			httpServer_Order_private : HTTPServiceP ; 
+			httpServer_Order_public : HTTPServiceP ; 
+			dbClient_Order : DBClientP ; 
+		
+		configuration { 
+			components : 
+				UpdateOrderCP : UpdateOrderCP { 
+					using ports : 
+						httpServer_UpdateOrder : HTTPServiceP ; 
+						dbClient_UpdateOrder : DBClientP ;
+				} 
+				
+				RetrieveOrderCP : RetrieveOrderCP { 
+					using ports : 
+						httpServer_RetrieveOrder : HTTPServiceP ; 
+						dbClient_RetrieveOrder : DBClientP ;
+				} 
+			
+			delegations : 
+				dbClient_UpdateOrder to dbClient_Order
+				dbClient_RetrieveOrder to dbClient_Order 
+				httpServer_RetrieveOrder to httpServer_Order_public 
+				httpServer_UpdateOrder to httpServer_Order_private
+		}
+	} 
+	
+	boundary component def RetrieveOrderCP { 
+		ports : 
+			httpServer_RetrieveOrder : HTTPServiceP ; 
+			dbClient_RetrieveOrder : DBClientP ;
+	} 
+	
+	boundary component def UpdateOrderCP { 
+		ports : 
+			httpServer_UpdateOrder : HTTPServiceP ; 
+			dbClient_UpdateOrder : DBClientP ;
+	} 
+} 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
@@ -380,13 +839,55 @@ package FoodFastPorts {
 			requestOPT : HTTPRequestOPT ;
 			responseIPT : HTTPResponseIPT ;
 	} 
-port def BiometricTypeIPT { flow in BiometricTypeEnum } port def BiometricTypeOPT { flow out BiometricTypeEnum } port def BiometricRawIPT { flow in BiometricRawDT port def BiometricTypeIPT { flow in BiometricTypeEnum } } port def BiometricRawOPT { flow out BiometricRawDT } port def UserIPT { flow in UserDT port def BiometricRawIPT { flow in BiometricRawDT } } port def UserOPT { flow out UserDT } port def BooleanIPT { flow in Boolean } port def BooleanOPT { flow out Boolean } } 
+	
+	port def BiometricTypeIPT { 
+		flow in BiometricTypeEnum
+	} 
+	port def BiometricTypeOPT { 
+		flow out BiometricTypeEnum
+	} 
+	
+	port def BiometricRawIPT {
+		flow in BiometricRawDT
+	} 
+	port def BiometricRawOPT { 
+		flow out BiometricRawDT
+	} 
+	
+	port def UserIPT { 
+		flow in UserDT
+	} 
+	port def UserOPT { 
+		flow out UserDT
+	} 
+	
+	port def BooleanIPT { 
+		flow in Boolean
+	} 
+	port def BooleanOPT { 
+		flow out Boolean
+	} 
+	
+	port def SensorCN { 
+		ports : 
+			biometricType : BiometricRawOPT ; 
+			biometriRaw : BiometricTypeIPT ;
+	} 
+	
+	port def StringIPT { 
+		flow in String
+	} 
+	port def StringOPT { 
+		flow out String
+	}
+} 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
 	
 	Requirement UpdateUserFR ( 1.2 ) { 
-		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" satisfied by FoodFastComponents.UserUpdateCP ; 
+		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" 
+		satisfied by FoodFastComponents.UserUpdateCP ; 
 		
 		Requirement RegisterPaymentMethodsFR_ForUpdate ( 1.2.2 ) { 
 			text = "“O sistema deve permitir que o usuário atualize seus métodos de pagamento.”" 
@@ -398,7 +899,8 @@ Requirement ManageUsersFR ( 1 ) {
 	}
 	
 	Requirement RegisterUserFR ( 1.1 ) { 
-		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" satisfied by FoodFastComponents.UserCreateCP ; 
+		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" 
+		satisfied by FoodFastComponents.UserCreateCP ; 
 		
 		Requirement RegisterPersonalInfoFR_ForRegister ( 1.1.1 ) { 
 			text = "“O sistema deve permitir que o usuário cadastre suas informações pessoais.”" 
@@ -411,15 +913,18 @@ Requirement ManageUsersFR ( 1 ) {
 	
 	Requirement RetrieveUserFR ( 1.3 ) { 
 		text = "“O sistema deve permitir que o usuário visualize suas informações cadastradas.”"
-	satisfied by FoodFastComponents.UserRetrieveCP ; } 
+		satisfied by FoodFastComponents.UserRetrieveCP ; 
+	} 
 	
 	Requirement DeleteUserFR ( 1.4 ) { 
 		text = "“O sistema deve permitir que o usuário remova sua conta.”"
-	satisfied by FoodFastComponents.UserDeleteCP ; } 
+		satisfied by FoodFastComponents.UserDeleteCP ; 
+	} 
 
 	Requirement LoginUserFR ( 1.5 ) { 
 		text = "\"O sistema deve permitir que o usuário se autentique em sua conta com CPF e senha registrados.\""
-	satisfied by FoodFastComponents.UserAuthCP ; } 
+		satisfied by FoodFastComponents.UserAuthCP ; 
+	} 
 } 
 
  
@@ -428,11 +933,13 @@ Requirement ManageBiometricDataFR ( 2 ) {
 	
 	Requirement RegisterBiometricDataFR ( 2.1 ) { 
 		text = "\"O sistema deve permitir que o usuário registre seus dados biométricos no sistema.\""
-	satisfied by FoodFastComponents.RegisterBiometricCP ; } 
+		satisfied by FoodFastComponents.RegisterBiometricCP ; 
+	} 
 	
 	Requirement RemoveBiometricDataFR ( 2.2 ) { 
 		text = "\"O sistema deve permitir que o usuário remova seus dados biométricos cadastrados no sistema.\""
-	satisfied by FoodFastComponents.RemoveBiometricCP ; }
+		satisfied by FoodFastComponents.RemoveBiometricCP ; 
+	}
 } 
 
  
@@ -442,11 +949,13 @@ Requirement FingerprintAuthenticationFR ( 3.1 ) {
 	
 	Requirement CaptureFingerprintFR ( 3.1.1 ) { 
 		text = "\"O sistema deve capturar a impressão digital do usuário utilizando o sensor biométrico apropriado.\""
-	satisfied by FoodFastComponents.FingerprintSensorCP ; } 
+		satisfied by FoodFastComponents.FingerprintSensorCP ; 
+	} 
 	
 	Requirement RecognizeFingerprintFR ( 3.1.2 ) { 
 		text = "\"O sistema deve comparar a digital capturada com os dados biométricos registrados para validar a identidade do usuário.\""
-	satisfied by FoodFastComponents.BiometricRecognitionCP ; }
+		satisfied by FoodFastComponents.BiometricRecognitionCP ; 
+	}
 } 
 
 Requirement FacialAuthenticationFR ( 3.2 ) { 
@@ -455,11 +964,13 @@ Requirement FacialAuthenticationFR ( 3.2 ) {
 	
 	Requirement CaptureFaceFR ( 3.2.1 ) { 
 		text = "\"O sistema deve capturar a imagem facial do usuário utilizando a câmera disponibilizada pelo dispositivo.\""
-	satisfied by FoodFastComponents.FaceCameraCP ; } 
+		satisfied by FoodFastComponents.FaceCameraCP ; 
+	} 
 	
 	Requirement RecognizeFaceFR ( 3.2.2 ) { 
 		text = "\"O sistema deve comparar a imagem facial capturada com os dados biométricos registrados para validar a identidade do usuário.\""
-	satisfied by FoodFastComponents.BiometricRecognitionCP ; }
+		satisfied by FoodFastComponents.BiometricRecognitionCP ;
+	}
 }
 
 Requirement OrderManagementFR ( 4 ) { 
@@ -467,10 +978,12 @@ Requirement OrderManagementFR ( 4 ) {
 	
 	Requirement UpdateOrderFR ( 4.3 ) { 
 		text = "\"O sistema deve permitir que funcionários ou subsistemas responsáveis atualizem pedidos em processamento.\""
+		satisfied by FoodFastComponents.UpdateOrderCP ; 
 	}
 	
 	Requirement ViewOrderFR ( 4.2 ) { 
 		text = "\"O sistema deve permitir que o usuário visualize seus pedidos.\""
+		satisfied by FoodFastComponents.RetrieveOrderCP ; 
 	} 
 	
 	Requirement CreateOrderInMachineFR ( 4.1 ) { 
@@ -715,4 +1228,33 @@ Requirement QualityNFR ( 6 ) {
 Requirement CompatibilityNFR ( 6.4.2.1 ) { 
 	text = "“O sistema deve ser compatível com navegadores modernos e sistemas operacionais móveis (iOS e Android).”" 
 	derive QualityNFR.UsabilityNFR.ResponsivenessNFR ;
+} 
+
+Requirement ProductManagementFR ( 7 ) { 
+	text = "\"O sistema deve oferecer um conjunto integrado de funcionalidades para cadastrar, atualizar, consultar e remover produtos, além de permitir a verificação de disponibilidade conforme necessário para operação das máquinas.\"" 
+	
+	Requirement CreateProductFR ( 7.1 ) { 
+		text = "\"O sistema deve permitir o cadastro de um novo produto contendo nome, descrição, categoria e preço, garantindo a persistência das informações.\""
+		satisfied by FoodFastComponents.CreateProductCP ; 
+	} 
+	
+	Requirement UpdateProductFR ( 7.2 ) { 
+		text = "\"O sistema deve permitir a modificação dos dados de um produto previamente cadastrado, mantendo histórico consistente no banco de dados.\""
+		satisfied by FoodFastComponents.UpdateProductCP ; 
+	} 
+	
+	Requirement RetrieveProductFR ( 7.3 ) { 
+		text = "\"O sistema deve permitir a consulta de produtos individualmente ou em conjunto, retornando informações essenciais como nome, descrição, categoria, preço e disponibilidade quando aplicável.\""
+		satisfied by FoodFastComponents.RetrieveProductCP ; 
+	} 
+	
+	Requirement DeleteProductFR ( 7.4 ) { 
+		text = "\"O sistema deve permitir a remoção de um produto do catálogo, garantindo que os dados sejam excluídos de forma consistente.\""
+		satisfied by FoodFastComponents.DeleteProductCP ; 
+	} 
+	
+	Requirement CheckProductAvailabilityFR ( 7.5 ) { 
+		text = "\"O sistema deve permitir a verificação da disponibilidade de um produto, considerando informações provenientes de estoque interno ou processamento em máquinas específicas.\""
+		satisfied by FoodFastComponents.CheckAvailabilityProductCP ; 
+	}
 }
