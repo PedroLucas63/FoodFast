@@ -218,10 +218,10 @@ package SysADLTypes {
 			paymentStatus : PaymentStatusEnum ; 
 			orderStatus : OrderStatusEnum ; 
 			items : OrderItemArrayDT ;
-	} 
+	kitchenId : Int ; } 
 	
 	datatype OrderItemArrayDT { } 
-}
+datatype OrderProcessingDT { attributes : finalPrice : Real ; kitchenId : Int ; } datatype OrderChargeDT { attributes : customerId : Int ; ^value : Real ; } }
 
 package FoodFastConnectors { 
 	import FoodFastPorts ;
@@ -350,7 +350,7 @@ package FoodFastConnectors {
 		flows : 
 			String from source to destination
 	} 
-}
+connector def IntCN { participants : ~ destination : IntIPT ; ~ source : IntOPT ; flows : Int from source to destination } connector def OrderCN { participants : ~ destination : OrderIPT ; ~ source : OrderOPT ; flows : OrderDT from source to destination } connector def OrderProcessingCN { participants : ~ destination : OrderProcessingIPT ; ~ source : OrderProcessingOPT ; flows : OrderProcessingDT from source to destination } connector def OrderItemArrayCN { participants : ~ destination : OrderItemArrayIPT ; ~ source : OrderItemArrayOPT ; flows : OrderItemArrayDT from source to destination } connector def RealCN { participants : ~ source : RealOPT ; ~ destination : RealIPT ; flows : Real from source to destination } connector def OrderChargeCN { participants : ~ destination : OrderChargeIPT ; ~ source : OrderChargeOPT ; flows : OrderChargeDT from source to destination } connector def PaymentStatusCN { participants : ~ destination : PaymentStatusIPT ; ~ source : PaymentStatusOPT ; flows : PaymentStatusEnum from source to destination } }
 
 package FoodFastComponents { 
 	import FoodFastConnectors ; 
@@ -766,12 +766,11 @@ package FoodFastComponents {
 						dbClient_RetrieveOrder : DBClientP ;
 				} 
 			
-			delegations : 
-				dbClient_UpdateOrder to dbClient_Order
+			ProcessingOrderCP : ProcessingOrderCP { using ports : dbClient_ProcessingOrder : DBClientP ; httpServer_ProcessingOrder : HTTPServiceP ; } delegations : dbClient_UpdateOrder to dbClient_Order
 				dbClient_RetrieveOrder to dbClient_Order 
 				httpServer_RetrieveOrder to httpServer_Order_public 
 				httpServer_UpdateOrder to httpServer_Order_private
-		}
+		dbClient_ProcessingOrder to dbClient_Order httpServer_ProcessingOrder to httpServer_Order_private }
 	} 
 	
 	boundary component def RetrieveOrderCP { 
@@ -785,7 +784,15 @@ package FoodFastComponents {
 			httpServer_UpdateOrder : HTTPServiceP ; 
 			dbClient_UpdateOrder : DBClientP ;
 	} 
-} 
+boundary
+	component def CheckDebtsCP { ports : userId_CheckDebts : IntIPT ; dbClient_CheckDebts : DBClientP ; hasDebts : BooleanOPT ; }
+	component def ProcessingOrderCP { ports : dbClient_ProcessingOrder : DBClientP ; httpServer_ProcessingOrder : HTTPServiceP ; configuration { components : OrderProcessingCoordinatorCP : OrderProcessingCoordinatorCP { using ports : httpServer_ProcessingOrderCoordinator : HTTPServiceP ; userId_CheckDebts_Coordinator : IntOPT ; hasDebts_Coordinator : BooleanIPT ; dbClient_ProcessingOrderCoordinator : DBClientP ; order_OrderProcessingCoordinator : OrderOPT ; orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; } CheckDebtsCP : CheckDebtsCP { using ports : userId_CheckDebts : IntIPT ; dbClient_CheckDebts : DBClientP ; hasDebts : BooleanOPT ; } AdditionalProcessingCP : AdditionalProcessingCP { using ports : order_AdditionalProcessing : OrderIPT ; orderProcessing_AdditionalProcessing : OrderProcessingOPT ; } PaymentProcessingCP : PaymentProcessingCP { using ports : orderCharge_PaymentProcessing : OrderChargeIPT ; paymentResult_PaymentProcessing : PaymentStatusOPT ; dbClient_PaymentProcessig : DBClientP ; } connectors : hasDebtsCN : BooleanCN bindings hasDebts = hasDebts_Coordinator ; userIdCN : IntCN bindings userId_CheckDebts_Coordinator = userId_CheckDebts ; additionalProcessingResults : OrderProcessingCN bindings orderProcessing_AdditionalProcessing = orderProcessing_OrderProcessingCoordinator ; orderToAdditionalProcessing : OrderCN bindings order_OrderProcessingCoordinator = order_AdditionalProcessing ; paymentStatusResult : RealCN bindings paymentResult_PaymentProcessing = paymentResult_OrderProcessingCoordinator ; paymentRequest : OrderChargeCN bindings orderCharge_OrderProcessingCoordinator = orderCharge_PaymentProcessing ; delegations : httpServer_ProcessingOrderCoordinator to httpServer_ProcessingOrder dbClient_ProcessingOrderCoordinator to dbClient_ProcessingOrder dbClient_CheckDebts to dbClient_ProcessingOrder dbClient_PaymentProcessig to dbClient_ProcessingOrder } } boundary
+	component def KitchenRoutingCP { ports : orderItems_Routing : OrderItemArrayIPT ; kitchenId_Routing : IntOPT ; }
+	component def OrderProcessingCoordinatorCP { ports : httpServer_ProcessingOrderCoordinator : HTTPServiceP ; userId_CheckDebts_Coordinator : IntOPT ; hasDebts_Coordinator : BooleanIPT ; dbClient_ProcessingOrderCoordinator : DBClientP ; order_OrderProcessingCoordinator : OrderOPT ; orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; }
+	component def AdditionalProcessingCP { ports : order_AdditionalProcessing : OrderIPT ; orderProcessing_AdditionalProcessing : OrderProcessingOPT ; configuration { components : AdditionalProcessingCoordinatorCP : AdditionalProcessingCoordinatorCP { using ports : orderProcessing_APCoordinator : OrderProcessingOPT ; orderItems_ToRouting : OrderItemArrayOPT ; orderItems_ToPricing : OrderItemArrayOPT ; kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; order_APCoordinator : OrderIPT ; } KitchenRoutingCP : KitchenRoutingCP { using ports : orderItems_Routing : OrderItemArrayIPT ; kitchenId_Routing : IntOPT ; } PriceCalculationCP : PriceCalculationCP { using ports : orderItems_Pricing : OrderItemArrayIPT ; orderPrice_Pricing : RealOPT ; } connectors : kitchenId : IntCN bindings kitchenId_Routing = kitchenId_ByRouting ; ordersToRouting : OrderItemArrayCN bindings orderItems_ToRouting = orderItems_Routing ; orderPrice : RealCN bindings orderPrice_Pricing = orderPrice_ByPricing ; ordersToPricing : OrderItemArrayCN bindings orderItems_ToPricing = orderItems_Pricing ; delegations : order_APCoordinator to order_AdditionalProcessing orderProcessing_APCoordinator to orderProcessing_AdditionalProcessing } } boundary
+	component def PaymentProcessingCP { ports : orderCharge_PaymentProcessing : OrderChargeIPT ; paymentResult_PaymentProcessing : PaymentStatusOPT ; dbClient_PaymentProcessig : DBClientP ; } boundary
+	component def PriceCalculationCP { ports : orderItems_Pricing : OrderItemArrayIPT ; orderPrice_Pricing : RealOPT ; }
+	component def AdditionalProcessingCoordinatorCP { ports : orderProcessing_APCoordinator : OrderProcessingOPT ; orderItems_ToRouting : OrderItemArrayOPT ; orderItems_ToPricing : OrderItemArrayOPT ; kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; order_APCoordinator : OrderIPT ; } } 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
@@ -880,7 +887,7 @@ package FoodFastPorts {
 	port def StringOPT { 
 		flow out String
 	}
-} 
+port def IntIPT { flow in Int } port def IntOPT { flow out Int } port def OrderIPT { flow in OrderDT } port def OrderOPT { flow out OrderDT } port def OrderProcessingIPT { flow in OrderProcessingDT } port def OrderProcessingOPT { flow out OrderProcessingDT } port def OrderItemArrayIPT { flow in OrderItemArrayDT } port def OrderItemArrayOPT { flow out OrderItemArrayDT } port def RealIPT { flow in Real } port def RealOPT { flow out Real } port def OrderChargeIPT { flow in OrderChargeDT } port def OrderChargeOPT { flow out OrderChargeDT } port def PaymentStatusIPT { flow in PaymentStatusEnum } port def PaymentStatusOPT { flow out PaymentStatusEnum } } 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
