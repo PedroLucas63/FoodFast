@@ -65,7 +65,8 @@ package SysADLTypes {
 	} 
 	
 	datatype TimestampDT { 
-		attributes : ^value : MillisecondsVT ;
+		attributes : 
+			^value : MillisecondsVT ;
 	} 
 	datatype DateDT { 
 		attributes : 
@@ -218,10 +219,42 @@ package SysADLTypes {
 			paymentStatus : PaymentStatusEnum ; 
 			orderStatus : OrderStatusEnum ; 
 			items : OrderItemArrayDT ;
-	kitchenId : Int ; machineId : Int ; } 
+			kitchenId : Int ; machineId : Int ; 
+	} 
 	
 	datatype OrderItemArrayDT { } 
-datatype OrderProcessingDT { attributes : finalPrice : Real ; kitchenId : Int ; } datatype OrderChargeDT { attributes : customerId : Int ; ^value : Real ; } datatype StockInfoArrayDT { } datatype DispenserProductDT { attributes : productId : Int ; authorization : Boolean ; } }
+	
+	datatype OrderProcessingDT { 
+		attributes : 
+			finalPrice : Real ; 
+			kitchenId : Int ;
+	} 
+	
+	datatype OrderChargeDT { 
+		attributes : 
+			customerId : Int ; 
+			^value : Real ;
+	} 
+	
+	datatype StockInfoArrayDT { } 
+	
+	datatype DispenserProductDT { 
+		attributes : 
+			productId : Int ; 
+			authorization : Boolean ;
+	} 
+	
+	enum CompartmentCMDEnum { 
+		OPEN, 
+		CLOSE
+	} 
+	
+	datatype PickupOrderAddedDT { 
+		attributes : 
+			orderId : Int ; 
+			pickupId : Int ;
+	} 
+}
 
 package FoodFastConnectors { 
 	import FoodFastPorts ;
@@ -350,7 +383,87 @@ package FoodFastConnectors {
 		flows : 
 			String from source to destination
 	} 
-connector def IntCN { participants : ~ destination : IntIPT ; ~ source : IntOPT ; flows : Int from source to destination } connector def OrderCN { participants : ~ destination : OrderIPT ; ~ source : OrderOPT ; flows : OrderDT from source to destination } connector def OrderProcessingCN { participants : ~ destination : OrderProcessingIPT ; ~ source : OrderProcessingOPT ; flows : OrderProcessingDT from source to destination } connector def OrderItemArrayCN { participants : ~ destination : OrderItemArrayIPT ; ~ source : OrderItemArrayOPT ; flows : OrderItemArrayDT from source to destination } connector def RealCN { participants : ~ source : RealOPT ; ~ destination : RealIPT ; flows : Real from source to destination } connector def OrderChargeCN { participants : ~ destination : OrderChargeIPT ; ~ source : OrderChargeOPT ; flows : OrderChargeDT from source to destination } connector def PaymentStatusCN { participants : ~ destination : PaymentStatusIPT ; ~ source : PaymentStatusOPT ; flows : PaymentStatusEnum from source to destination } connector def DispenserProductCN { participants : ~ destination : DispenserProductIPT ; ~ source : DispenserProductOPT ; flows : DispenserProductDT from source to destination } }
+	
+	connector def IntCN { 
+		participants : 
+			~ destination : IntIPT ; 
+			~ source : IntOPT ; 
+		flows : 
+			Int from source to destination
+	} 
+	
+	connector def OrderCN { 
+		participants : 
+			~ destination : OrderIPT ; 
+			~ source : OrderOPT ; 
+		flows : 
+			OrderDT from source to destination
+	} 
+	
+	connector def OrderProcessingCN { 
+		participants : 
+			~ destination : OrderProcessingIPT ; 
+			~ source : OrderProcessingOPT ; 
+		flows : 
+			OrderProcessingDT from source to destination
+	} 
+	
+	connector def OrderItemArrayCN { 
+		participants : 
+			~ destination : OrderItemArrayIPT ; 
+			~ source : OrderItemArrayOPT ; 
+		flows : 
+			OrderItemArrayDT from source to destination
+	} 
+	
+	connector def RealCN { 
+		participants : 
+			~ source : RealOPT ; 
+			~ destination : RealIPT ; 
+		flows : 
+			Real from source to destination
+	} 
+	
+	connector def OrderChargeCN { 
+		participants : 
+			~ destination : OrderChargeIPT ; 
+			~ source : OrderChargeOPT ; 
+		flows : 
+			OrderChargeDT from source to destination
+	} 
+		
+	connector def PaymentStatusCN { 
+		participants : 
+			~ destination : PaymentStatusIPT ; 
+			~ source : PaymentStatusOPT ; 
+		flows : 
+			PaymentStatusEnum from source to destination
+	} 
+	
+	connector def DispenserProductCN { 
+		participants : 
+			~ destination : DispenserProductIPT ; 
+			~ source : DispenserProductOPT ; 
+		flows : 
+			DispenserProductDT from source to destination
+	} 
+	
+	connector def CompartmentCMDCN { 
+		participants : 
+			~ destination : CompartmentCMDIPT ; 
+			~ source : CompartmentCMDOPT ; 
+		flows : 
+			CompartmentCMDEnum from source to destination
+	}
+	
+	connector def PickupOrderAddedCN { 
+		participants : 
+			~ destination : PickupOrderAddedIPT ; 
+			~ source : PickupOrderAddedOPT ; 
+		flows : 
+			PickupOrderAddedDT from source to destination
+	}
+}
 
 package FoodFastComponents { 
 	import FoodFastConnectors ; 
@@ -398,19 +511,70 @@ package FoodFastComponents {
 						httpServer_Product_public : HTTPServiceP ; 
 						dbClient_Product : DBClientP ;
 				} 
-				
-			 
 			
-			DispenserSnackMachineCP : DispenserSnackMachineCP { using ports : httpClient_DispenserSnackToOrderServer : HTTPClientP ; httpClient_DispenserSnackToBiometricServer : HTTPClientP ; } DispenserDrinkMachineCP : DispenserDrinkMachineCP { using ports : httpClient_DispenserDrinkToOrderServer : HTTPClientP ; httpClient_DispenserDrinkToBiometricServer : HTTPClientP ; } OrderServerCP : OrderServerCP { using ports : httpServer_Order_private : HTTPServiceP ; httpServer_Order_public : HTTPServiceP ; dbClient_Order : DBClientP ; httpClient_CheckItemServer : HTTPClientP ; } TapMachineCP : TapMachineCP { using ports : httpClient_TapToBiometricServer : HTTPClientP ; httpClient_TapToOrderServer : HTTPClientP ; httpClient_TapToProductServer : HTTPClientP ; } TotemCP : TotemCP { using ports : httpClient_TotemToProductServer : HTTPClientP ; httpClient_TotemToOrderServer : HTTPClientP ; httpClient_TotemToBiometricServer : HTTPClientP ; } connectors : 
+				DispenserSnackMachineCP : DispenserSnackMachineCP { 
+					using ports : 
+						httpClient_DispenserSnackToOrderServer : HTTPClientP ; 
+						httpClient_DispenserSnackToBiometricServer : HTTPClientP ;
+				} 
+				
+				DispenserDrinkMachineCP : DispenserDrinkMachineCP { 
+					using ports : 
+						httpClient_DispenserDrinkToOrderServer : HTTPClientP ; 
+						httpClient_DispenserDrinkToBiometricServer : HTTPClientP ;
+				} 
+				
+				OrderServerCP : OrderServerCP { 
+					using ports : 
+						httpServer_Order_private : HTTPServiceP ; 
+						httpServer_Order_public : HTTPServiceP ; 
+						dbClient_Order : DBClientP ; 
+						httpClient_CheckItemServer : HTTPClientP ;
+				} 
+				
+				TapMachineCP : TapMachineCP { 
+					using ports : 
+						httpClient_TapToBiometricServer : HTTPClientP ; 
+						httpClient_TapToOrderServer : HTTPClientP ; 
+						httpClient_TapToProductServer : HTTPClientP ;
+				} 
+				
+				TotemCP : TotemCP { 
+					using ports : 
+						httpClient_TotemToProductServer : HTTPClientP ; 
+						httpClient_TotemToOrderServer : HTTPClientP ; 
+						httpClient_TotemToBiometricServer : HTTPClientP ;
+				} 
+				
+			PickupStationCP : PickupStationCP { 
+				using ports : 
+					httpClient_PickupToOrderServer : HTTPClientP ; 
+					httpClient_PickupToBiometricServer : HTTPClientP ;
+			} 
+			
+			connectors : 
 				DB_UserServer : DatabaseCN bindings dbClient_User = dbServiceP ; 
 				DB_BiometricServer : DatabaseCN bindings dbClient_Biometric = dbServiceP ; 
 				Front_UserServer : HTTPCN bindings httpClient_Frontend = httpServer_User ; 
 				Toten_BiometricServer : HTTPCN bindings httpClient_BiometricToten = httpServer_Biometric ; 
 				DB_ProductServer : DatabaseCN bindings dbClient_Product = dbServiceP ; 
 				FrontAdmin_ProductServer : HTTPCN bindings httpClient_AdminFrontend = httpServer_Product_private ; 
-				 
-				 
-		DispenserSnack_BiometricServer : HTTPCN bindings httpClient_DispenserSnackToBiometricServer = httpServer_Biometric ; DispenserDrink_BiometricServer : HTTPCN bindings httpClient_DispenserDrinkToBiometricServer = httpServer_Biometric ; checkItems : HTTPCN bindings httpClient_CheckItemServer = httpServer_Product_private ; Front_OrderServer : HTTPCN bindings httpClient_Frontend = httpServer_Order_public ; DB_OrderServer : DatabaseCN bindings dbClient_Order = dbServiceP ; DispenserSnack_OrderServer : HTTPCN bindings httpClient_DispenserSnackToOrderServer = httpServer_Order_private ; DispenserDrink_OrderServer : HTTPCN bindings httpClient_DispenserDrinkToOrderServer = httpServer_Order_private ; Tap_BiometricServer : HTTPCN bindings httpClient_TapToBiometricServer = httpServer_Biometric ; Tap_OrderServer : HTTPCN bindings httpClient_TapToOrderServer = httpServer_Order_private ; Tap_ProductServer : HTTPCN bindings httpClient_TapToProductServer = httpServer_Product_private ; Totam_BiometricServer : HTTPCN bindings httpClient_TotemToBiometricServer = httpServer_Biometric ; Totem_OrderServer : HTTPCN bindings httpClient_TotemToOrderServer = httpServer_Order_private ; Totem_ProductServer : HTTPCN bindings httpClient_TotemToProductServer = httpServer_Product_private ; }
+				DispenserSnack_BiometricServer : HTTPCN bindings httpClient_DispenserSnackToBiometricServer = httpServer_Biometric ; 
+				DispenserDrink_BiometricServer : HTTPCN bindings httpClient_DispenserDrinkToBiometricServer = httpServer_Biometric ; 
+				checkItems : HTTPCN bindings httpClient_CheckItemServer = httpServer_Product_private ; 
+				Front_OrderServer : HTTPCN bindings httpClient_Frontend = httpServer_Order_public ; 
+				DB_OrderServer : DatabaseCN bindings dbClient_Order = dbServiceP ; 
+				DispenserSnack_OrderServer : HTTPCN bindings httpClient_DispenserSnackToOrderServer = httpServer_Order_private ; 
+				DispenserDrink_OrderServer : HTTPCN bindings httpClient_DispenserDrinkToOrderServer = httpServer_Order_private ; 
+				Tap_BiometricServer : HTTPCN bindings httpClient_TapToBiometricServer = httpServer_Biometric ; 
+				Tap_OrderServer : HTTPCN bindings httpClient_TapToOrderServer = httpServer_Order_private ; 
+				Tap_ProductServer : HTTPCN bindings httpClient_TapToProductServer = httpServer_Product_private ; 
+				Totem_BiometricServer : HTTPCN bindings httpClient_TotemToBiometricServer = httpServer_Biometric ; 
+				Totem_OrderServer : HTTPCN bindings httpClient_TotemToOrderServer = httpServer_Order_private ; 
+				Totem_ProductServer : HTTPCN bindings httpClient_TotemToProductServer = httpServer_Product_private ; 
+				PickupBiometricServer : HTTPCN bindings httpClient_PickupToBiometricServer = httpServer_Biometric ; 
+				Pickup_OrderServer : HTTPCN bindings httpClient_PickupToOrderServer = httpServer_Order_private ; 
+		}
 	} 
 	
 	boundary component def DatabaseCP { 
@@ -761,15 +925,43 @@ package FoodFastComponents {
 						dbClient_RetrieveOrder : DBClientP ;
 				} 
 			
-			 
+				CheckDebtsCP : CheckDebtsCP { 
+					using ports : 
+					dbClient_CheckDebts : DBClientP ; 
+					httpServer_CheckDebts : HTTPServiceP ;
+				} 
+				
+				ProcessingOrderCP : ProcessingOrderCP { 
+					using ports : 
+						dbClient_ProcessingOrder : DBClientP ;
+						httpServer_ProcessingOrder : HTTPServiceP ; 
+						httpClient_CheckDebtsProcessing : HTTPClientP ; 
+						httpClient_CheckItemsProcessing : HTTPClientP ;
+				} 
+				
+				CreateOrderCP : CreateOrderCP { 
+					using ports : 
+						httpClient_CreateOrder : DBClientP ; 
+						httpServer_CreateOrder : HTTPServiceP ; 
+						dbClient_CreateOrder : DBClientP ;
+				} 
 			
-			CheckDebtsCP : CheckDebtsCP { using ports : dbClient_CheckDebts : DBClientP ; httpServer_CheckDebts : HTTPServiceP ; } ProcessingOrderCP : ProcessingOrderCP { using ports : dbClient_ProcessingOrder : DBClientP ; httpServer_ProcessingOrder : HTTPServiceP ; httpClient_CheckDebtsProcessing : HTTPClientP ; httpClient_CheckItemsProcessing : HTTPClientP ; } CreateOrderCP : CreateOrderCP { using ports : httpClient_CreateOrder : DBClientP ; httpServer_CreateOrder : HTTPServiceP ; dbClient_CreateOrder : DBClientP ; } connectors : hasDebitsCN : HTTPCN bindings httpClient_CheckDebtsProcessing = httpServer_CheckDebts ; processingOrder : HTTPCN bindings httpClient_CreateOrder = httpServer_ProcessingOrder ; delegations : dbClient_UpdateOrder to dbClient_Order
+			connectors : 
+				hasDebitsCN : HTTPCN bindings httpClient_CheckDebtsProcessing = httpServer_CheckDebts ; 
+				processingOrder : HTTPCN bindings httpClient_CreateOrder = httpServer_ProcessingOrder ; 
+			
+			delegations : 
+				dbClient_UpdateOrder to dbClient_Order
 				dbClient_RetrieveOrder to dbClient_Order 
 				httpServer_RetrieveOrder to httpServer_Order_public 
 				httpServer_UpdateOrder to httpServer_Order_private
-				
-				 
-			httpServer_CheckDebts to httpServer_Order_private dbClient_CheckDebts to dbClient_Order dbClient_ProcessingOrder to dbClient_Order httpServer_ProcessingOrder to httpServer_Order_private httpClient_CheckItemsProcessing to httpClient_CheckItemServer dbClient_CreateOrder to dbClient_Order httpServer_CreateOrder to httpServer_Order_private }
+				httpServer_CheckDebts to httpServer_Order_private 
+				dbClient_CheckDebts to dbClient_Order 
+				dbClient_ProcessingOrder to dbClient_Order 
+				httpServer_ProcessingOrder to httpServer_Order_private 
+				httpClient_CheckItemsProcessing to httpClient_CheckItemServer 
+				dbClient_CreateOrder to dbClient_Order 
+				httpServer_CreateOrder to httpServer_Order_private }
 	} 
 	
 	boundary component def RetrieveOrderCP { 
@@ -793,38 +985,517 @@ package FoodFastComponents {
 	component def ProcessingOrderCP { 
 		ports : 
 			dbClient_ProcessingOrder : DBClientP ; 
-			httpServer_ProcessingOrder : HTTPServiceP [ 1 , 2 ] ; httpClient_CheckDebtsProcessing : HTTPClientP ; 
-		
-		
-	httpClient_CheckItemsProcessing : HTTPClientP ; 
-		
-		 
+			httpServer_ProcessingOrder : HTTPServiceP [ 1 , 2 ] ; 
+			httpClient_CheckDebtsProcessing : HTTPClientP ; 
+			httpClient_CheckItemsProcessing : HTTPClientP ; 
+		configuration { 
+			components :
+				AdditionalProcessingCP : AdditionalProcessingCP { 
+					using ports : 
+						order_AdditionalProcessing : OrderIPT ; 
+						orderProcessing_AdditionalProcessing : OrderProcessingOPT ;
+				} 
+				
+				PaymentProcessingCP : PaymentProcessingCP { 
+					using ports : 
+						orderCharge_PaymentProcessing : OrderChargeIPT ; 
+						paymentResult_PaymentProcessing : PaymentStatusOPT ; 
+						dbClient_PaymentProcessig : DBClientP ;
+				} 
+				
+				CheckItemsAvailabilityCP : CheckItemsAvailabilityCP { 
+					using ports : 
+						httpClient_CheckItemsAvailability : HTTPClientP ; 
+						items_CheckItemsAvailability : OrderItemArrayIPT ; 
+						availibility : BooleanOPT ;
+				} 
+				
+				OrderProcessingCoordinatorCP : OrderProcessingCoordinatorCP { 
+					using ports : 
+						httpServer_ProcessingOrderCoordinator : HTTPServiceP ; 
+						dbClient_ProcessingOrderCoordinator : DBClientP ; 
+						order_OrderProcessingCoordinator : OrderOPT ; 
+						orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; 
+						orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; 
+						paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; 
+						httpClient_CheckDebtsPCoordinator : HTTPClientP ; 
+						availibility_Coordinator : BooleanIPT ; 
+						items_CIACoordinator : OrderItemArrayOPT ;
+				} 
+			
+			connectors : 
+				allProductsAvailable : BooleanCN bindings availibility = availibility_Coordinator ; 
+				itemsToAvaluation : OrderItemArrayCN bindings items_CIACoordinator = items_CheckItemsAvailability ; 
+				orderToAdditionalProcessing : OrderCN bindings order_OrderProcessingCoordinator = order_AdditionalProcessing ; 
+				additionalProcessingResult : OrderProcessingCN bindings orderProcessing_AdditionalProcessing = orderProcessing_OrderProcessingCoordinator ; 
+				paymentRequest : OrderChargeCN bindings orderCharge_OrderProcessingCoordinator = orderCharge_PaymentProcessing ; 
+				paymentStatusResult : PaymentStatusCN bindings paymentResult_PaymentProcessing = paymentResult_OrderProcessingCoordinator ; 
+			
+			delegations : 
+				dbClient_ProcessingOrderCoordinator to dbClient_ProcessingOrder 
+				httpServer_ProcessingOrderCoordinator to httpServer_ProcessingOrder 
+				httpClient_CheckDebtsPCoordinator to httpClient_CheckDebtsProcessing 
+				httpClient_CheckItemsAvailability to httpClient_CheckItemsProcessing 
+				dbClient_PaymentProcessig to dbClient_ProcessingOrder 
+		}
+	} 
+	
+	boundary component def KitchenRoutingCP { 
+		ports : 
+			orderItems_Routing : OrderItemArrayIPT ; 
+			kitchenId_Routing : IntOPT ;
+	}
+	
+	component def OrderProcessingCoordinatorCP { 
+		ports :
+			httpServer_ProcessingOrderCoordinator : HTTPServiceP ; 
+			dbClient_ProcessingOrderCoordinator : DBClientP ; 
+			order_OrderProcessingCoordinator : OrderOPT ;
+			orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; 
+			orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; 
+			paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; 
+			httpClient_CheckDebtsPCoordinator : HTTPClientP ; 
+			availibility_Coordinator : BooleanIPT ; 
+			items_CIACoordinator : OrderItemArrayOPT ;
+	}
+	
+	component def AdditionalProcessingCP { 
+		ports : 
+			order_AdditionalProcessing : OrderIPT ; 
+			orderProcessing_AdditionalProcessing : OrderProcessingOPT ; 
 		
 		configuration { 
 			components : 
-				  
+				AdditionalProcessingCoordinatorCP : AdditionalProcessingCoordinatorCP { 
+					using ports : 
+						orderProcessing_APCoordinator : OrderProcessingOPT ; 
+						orderItems_ToRouting : OrderItemArrayOPT ; 
+						orderItems_ToPricing : OrderItemArrayOPT ;
+						kitchenId_ByRouting : IntIPT ; 
+						orderPrice_ByPricing : RealIPT ; 
+						order_APCoordinator : OrderIPT ;
+				} 
 				
-				  AdditionalProcessingCP : AdditionalProcessingCP { using ports : order_AdditionalProcessing : OrderIPT ; orderProcessing_AdditionalProcessing : OrderProcessingOPT ; } PaymentProcessingCP : PaymentProcessingCP { using ports : orderCharge_PaymentProcessing : OrderChargeIPT ; paymentResult_PaymentProcessing : PaymentStatusOPT ; dbClient_PaymentProcessig : DBClientP ; } CheckItemsAvailabilityCP : CheckItemsAvailabilityCP { using ports : httpClient_CheckItemsAvailability : HTTPClientP ; items_CheckItemsAvailability : OrderItemArrayIPT ; availibility : BooleanOPT ; } OrderProcessingCoordinatorCP : OrderProcessingCoordinatorCP { using ports : httpServer_ProcessingOrderCoordinator : HTTPServiceP ; dbClient_ProcessingOrderCoordinator : DBClientP ; order_OrderProcessingCoordinator : OrderOPT ; orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; httpClient_CheckDebtsPCoordinator : HTTPClientP ; availibility_Coordinator : BooleanIPT ; items_CIACoordinator : OrderItemArrayOPT ; } connectors : allProductsAvailable : BooleanCN bindings availibility = availibility_Coordinator ; itemsToAvaluation : OrderItemArrayCN bindings items_CIACoordinator = items_CheckItemsAvailability ; orderToAdditionalProcessing : OrderCN bindings order_OrderProcessingCoordinator = order_AdditionalProcessing ; additionalProcessingResult : OrderProcessingCN bindings orderProcessing_AdditionalProcessing = orderProcessing_OrderProcessingCoordinator ; paymentRequest : OrderChargeCN bindings orderCharge_OrderProcessingCoordinator = orderCharge_PaymentProcessing ; paymentStatusResult : PaymentStatusCN bindings paymentResult_PaymentProcessing = paymentResult_OrderProcessingCoordinator ; delegations : dbClient_ProcessingOrderCoordinator to dbClient_ProcessingOrder httpServer_ProcessingOrderCoordinator to httpServer_ProcessingOrder httpClient_CheckDebtsPCoordinator to httpClient_CheckDebtsProcessing httpClient_CheckItemsAvailability to httpClient_CheckItemsProcessing dbClient_PaymentProcessig to dbClient_ProcessingOrder }
-	} boundary
-	component def KitchenRoutingCP { ports : orderItems_Routing : OrderItemArrayIPT ; kitchenId_Routing : IntOPT ; }
-	component def OrderProcessingCoordinatorCP { ports : httpServer_ProcessingOrderCoordinator : HTTPServiceP ;   dbClient_ProcessingOrderCoordinator : DBClientP ; order_OrderProcessingCoordinator : OrderOPT ; orderProcessing_OrderProcessingCoordinator : OrderProcessingIPT ; orderCharge_OrderProcessingCoordinator : OrderChargeOPT ; paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; httpClient_CheckDebtsPCoordinator : HTTPClientP ; availibility_Coordinator : BooleanIPT ; items_CIACoordinator : OrderItemArrayOPT ; }
-	component def AdditionalProcessingCP { ports : order_AdditionalProcessing : OrderIPT ; orderProcessing_AdditionalProcessing : OrderProcessingOPT ; configuration { components : AdditionalProcessingCoordinatorCP : AdditionalProcessingCoordinatorCP { using ports : orderProcessing_APCoordinator : OrderProcessingOPT ; orderItems_ToRouting : OrderItemArrayOPT ; orderItems_ToPricing : OrderItemArrayOPT ; kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; order_APCoordinator : OrderIPT ; } KitchenRoutingCP : KitchenRoutingCP { using ports : orderItems_Routing : OrderItemArrayIPT ; kitchenId_Routing : IntOPT ; } PriceCalculationCP : PriceCalculationCP { using ports : orderItems_Pricing : OrderItemArrayIPT ; orderPrice_Pricing : RealOPT ; } connectors : kitchenId : IntCN bindings kitchenId_Routing = kitchenId_ByRouting ; ordersToRouting : OrderItemArrayCN bindings orderItems_ToRouting = orderItems_Routing ; orderPrice : RealCN bindings orderPrice_Pricing = orderPrice_ByPricing ; ordersToPricing : OrderItemArrayCN bindings orderItems_ToPricing = orderItems_Pricing ; delegations : order_APCoordinator to order_AdditionalProcessing orderProcessing_APCoordinator to orderProcessing_AdditionalProcessing } } boundary
-	component def PaymentProcessingCP { ports : orderCharge_PaymentProcessing : OrderChargeIPT ; paymentResult_PaymentProcessing : PaymentStatusOPT ; dbClient_PaymentProcessig : DBClientP ; } boundary
-	component def PriceCalculationCP { ports : orderItems_Pricing : OrderItemArrayIPT ; orderPrice_Pricing : RealOPT ; }
-	component def AdditionalProcessingCoordinatorCP { ports : orderProcessing_APCoordinator : OrderProcessingOPT ; orderItems_ToRouting : OrderItemArrayOPT ; orderItems_ToPricing : OrderItemArrayOPT ; kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; order_APCoordinator : OrderIPT ; } boundary
-	component def CheckItemsAvailabilityCP { ports : httpClient_CheckItemsAvailability : HTTPClientP ; items_CheckItemsAvailability : OrderItemArrayIPT ; availibility : BooleanOPT ; } boundary
-	component def CreateOrderCP { ports : httpClient_CreateOrder : DBClientP ; httpServer_CreateOrder : HTTPServiceP ; dbClient_CreateOrder : DBClientP ; }
-	component def DispenserSnackMachineCP { ports : httpClient_DispenserSnackToOrderServer : HTTPClientP ; httpClient_DispenserSnackToBiometricServer : HTTPClientP ; configuration { components : HardwareDispenserCP : HardwareDispenserCP { using ports : dispenserCommand : DispenserProductIPT ; } ProductSelectionCP : ProductSelectionCP { using ports : selectionOn : BooleanIPT ; snackId : IntOPT ; } BiometricSensorsCP : BiometricSensorsCP { using ports : sensors_Component : SensorIPT ; } DispenserMachineFlowCP : DispenserMachineFlowCP { using ports : selectionIsOn : BooleanOPT ; selectedSnackId : IntIPT ; dispenserCommandOut : DispenserProductOPT ; httpClient_DMSnackSensors : HTTPClientP ; httpClient_DMSnackBiometricServer : HTTPClientP ; httpClient_DMSnackOrderServer : HTTPClientP ; } connectors : biometricData : SensorCN bindings httpClient_DMSnackSensors = sensors_Component ; dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; selectedSnackId : IntCN bindings snackId = selectedSnackId ; authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; delegations : httpClient_DMSnackBiometricServer to httpClient_DispenserSnackToBiometricServer httpClient_DMSnackOrderServer to httpClient_DispenserSnackToOrderServer } } boundary
-	component def ProductSelectionCP { ports : selectionOn : BooleanIPT ; snackId : IntOPT ; }
-	component def DispenserMachineFlowCP { ports : selectionIsOn : BooleanOPT ; selectedSnackId : IntIPT ; dispenserCommandOut : DispenserProductOPT ; httpClient_DMSnackSensors : HTTPClientP ; httpClient_DMSnackBiometricServer : HTTPClientP ; httpClient_DMSnackOrderServer : HTTPClientP ; } boundary
-	component def HardwareDispenserCP { ports : dispenserCommand : DispenserProductIPT ; }
-	component def DispenserDrinkMachineCP { ports : httpClient_DispenserDrinkToOrderServer : HTTPClientP ; httpClient_DispenserDrinkToBiometricServer : HTTPClientP ; configuration { components : HardwareDispenserCP : HardwareDispenserCP { using ports : dispenserCommand : DispenserProductIPT ; } ProductSelectionCP : ProductSelectionCP { using ports : selectionOn : BooleanIPT ; snackId : IntOPT ; } BiometricSensorsCP : BiometricSensorsCP { using ports : sensors_Component : SensorIPT ; } DispenserMachineFlowCP : DispenserMachineFlowCP { using ports : selectionIsOn : BooleanOPT ; selectedSnackId : IntIPT ; dispenserCommandOut : DispenserProductOPT ; httpClient_DMSnackSensors : HTTPClientP ; httpClient_DMSnackBiometricServer : HTTPClientP ; httpClient_DMSnackOrderServer : HTTPClientP ; } connectors : biometricData : SensorCN bindings httpClient_DMSnackSensors = sensors_Component ; dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; selectedSnackId : IntCN bindings snackId = selectedSnackId ; authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; delegations : httpClient_DMSnackBiometricServer to httpClient_DispenserDrinkToBiometricServer httpClient_DMSnackOrderServer to httpClient_DispenserDrinkToOrderServer } } component def TapMachineCP { ports : httpClient_TapToBiometricServer : HTTPClientP ; httpClient_TapToOrderServer : HTTPClientP ; httpClient_TapToProductServer : HTTPClientP ; configuration { components : BiometricSensorsCP : BiometricSensorsCP { using ports : sensors_Component : SensorIPT ; } TapFlowControllerCP : TapFlowControllerCP { using ports : httpClient_TapControllerToProductServer : HTTPClientP ; httpClient_TapControllerToOrderServer : HTTPClientP ; httpClient_TapControllerToBiometricServer : HTTPClientP ; tapReleasedCMD : BooleanOPT ; amountOfDrink : IntIPT ; httpClient_TapSensors : HTTPClientP ; } TapActuatorCP : TapActuatorCP { using ports : tapReleased : BooleanIPT ; amountDispensedTap : IntOPT ; } connectors : biometricData : SensorCN bindings httpClient_TapSensors = sensors_Component ; tapReleased : BooleanCN bindings tapReleasedCMD = tapReleased ; drinkAmount : IntCN bindings amountDispensedTap = amountOfDrink ; delegations : httpClient_TapControllerToBiometricServer to httpClient_TapToBiometricServer httpClient_TapControllerToProductServer to httpClient_TapToProductServer httpClient_TapControllerToOrderServer to httpClient_TapToOrderServer } } boundary
-	component def TapActuatorCP { ports : tapReleased : BooleanIPT ; amountDispensedTap : IntOPT ; }
-	component def TapFlowControllerCP { ports : httpClient_TapControllerToProductServer : HTTPClientP ; httpClient_TapControllerToOrderServer : HTTPClientP ; httpClient_TapControllerToBiometricServer : HTTPClientP ; tapReleasedCMD : BooleanOPT ; amountOfDrink : IntIPT ; httpClient_TapSensors : HTTPClientP ; }
-	component def TotemCP { ports : httpClient_TotemToProductServer : HTTPClientP ; httpClient_TotemToOrderServer : HTTPClientP ; httpClient_TotemToBiometricServer : HTTPClientP ; configuration { components : TotemFlowControllerCP : TotemFlowControllerCP { using ports : httpClient_TotemControllerToOrderServer : HTTPClientP ; httpClient_TotemControllerToProductServer : HTTPClientP ; httpClient_TotemControllerToBiometricServer : HTTPClientP ; httpClient_TotemSensors : HTTPClientP ; selectedProducts : OrderItemArrayIPT ; enableDisplay : BooleanOPT ; orderToPrint : OrderOPT ; } BiometricSensorsCP : BiometricSensorsCP { using ports : sensors_Component : SensorIPT ; } ReceiptPrinterCP : ReceiptPrinterCP { using ports : printerData : OrderIPT ; } MenuDisplayCP : MenuDisplayCP { using ports : enabled : BooleanIPT ; orderProducts : OrderItemArrayOPT ; } connectors : sensorData : SensorCN bindings httpClient_TotemSensors = sensors_Component ; printerData : OrderCN bindings orderToPrint = printerData ; enabled : BooleanCN bindings enableDisplay = enabled ; orderProducts : OrderItemArrayCN bindings orderProducts = selectedProducts ; delegations : httpClient_TotemControllerToProductServer to httpClient_TotemToProductServer httpClient_TotemControllerToOrderServer to httpClient_TotemToOrderServer httpClient_TotemControllerToBiometricServer to httpClient_TotemToBiometricServer } }
-	component def TotemFlowControllerCP { ports : httpClient_TotemControllerToOrderServer : HTTPClientP ; httpClient_TotemControllerToProductServer : HTTPClientP ; httpClient_TotemControllerToBiometricServer : HTTPClientP ; httpClient_TotemSensors : HTTPClientP ; selectedProducts : OrderItemArrayIPT ; enableDisplay : BooleanOPT ; orderToPrint : OrderOPT ; } boundary
-	component def MenuDisplayCP { ports : enabled : BooleanIPT ; orderProducts : OrderItemArrayOPT ; } boundary
-	component def ReceiptPrinterCP { ports : printerData : OrderIPT ; } } 
+				KitchenRoutingCP : KitchenRoutingCP { 
+					using ports : 
+						orderItems_Routing : OrderItemArrayIPT ; 
+						kitchenId_Routing : IntOPT ;
+				} 
+				
+				PriceCalculationCP : PriceCalculationCP { 
+					using ports : 
+						orderItems_Pricing : OrderItemArrayIPT ; 
+						orderPrice_Pricing : RealOPT ;
+				} 
+			
+			connectors : 
+				kitchenId : IntCN bindings kitchenId_Routing = kitchenId_ByRouting ; 
+				ordersToRouting : OrderItemArrayCN bindings orderItems_ToRouting = orderItems_Routing ; 
+				orderPrice : RealCN bindings orderPrice_Pricing = orderPrice_ByPricing ; 
+				ordersToPricing : OrderItemArrayCN bindings orderItems_ToPricing = orderItems_Pricing ; 
+			
+			delegations : 
+				order_APCoordinator to order_AdditionalProcessing 
+				orderProcessing_APCoordinator to orderProcessing_AdditionalProcessing
+		}
+	} 
+	
+	boundary component def PaymentProcessingCP { 
+		ports : 
+			orderCharge_PaymentProcessing : OrderChargeIPT ; 
+			paymentResult_PaymentProcessing : PaymentStatusOPT ; 
+			dbClient_PaymentProcessig : DBClientP ;
+	} 
+	
+	boundary component def PriceCalculationCP { 
+		ports : 
+			orderItems_Pricing : OrderItemArrayIPT ; 
+			orderPrice_Pricing : RealOPT ;
+	}
+	
+	component def AdditionalProcessingCoordinatorCP { 
+		ports : 
+			orderProcessing_APCoordinator : OrderProcessingOPT ; 
+			orderItems_ToRouting : OrderItemArrayOPT ; 
+			orderItems_ToPricing : OrderItemArrayOPT ; 
+			kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; 
+			order_APCoordinator : OrderIPT ;
+	} 
+	
+	boundary component def CheckItemsAvailabilityCP { 
+		ports : 
+			httpClient_CheckItemsAvailability : HTTPClientP ; 
+			items_CheckItemsAvailability : OrderItemArrayIPT ; 
+			availibility : BooleanOPT ;
+	} 
+	
+	boundary component def CreateOrderCP { 
+		ports : 
+			httpClient_CreateOrder : DBClientP ; 
+			httpServer_CreateOrder : HTTPServiceP ; 
+			dbClient_CreateOrder : DBClientP ;
+	}
+	
+	component def DispenserSnackMachineCP { 
+		ports : 
+			httpClient_DispenserSnackToOrderServer : HTTPClientP ; 
+			httpClient_DispenserSnackToBiometricServer : HTTPClientP ; 
+		
+		configuration { 
+			components : 
+				HardwareDispenserCP : HardwareDispenserCP { 
+					using ports : 
+						dispenserCommand : DispenserProductIPT ;
+				} 
+				
+				ProductSelectionCP : ProductSelectionCP { 
+					using ports : 
+						selectionOn : BooleanIPT ; 
+						snackId : IntOPT ;
+				} 
+				
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : 
+						sensors_Component : SensorIPT ;
+				} 
+				
+				DispenserMachineFlowCP : DispenserMachineFlowCP { 
+					using ports : 
+						selectionIsOn : BooleanOPT ; 
+						selectedSnackId : IntIPT ; 
+						dispenserCommandOut : DispenserProductOPT ; 
+						httpClient_DMSnackSensors : HTTPClientP ; 
+						httpClient_DMSnackBiometricServer : HTTPClientP ; 
+						httpClient_DMSnackOrderServer : HTTPClientP ;
+				} 
+			
+			connectors : 
+				biometricData : SensorCN bindings httpClient_DMSnackSensors = sensors_Component ; 
+				dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; 
+				selectedSnackId : IntCN bindings snackId = selectedSnackId ; 
+				authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; 
+			
+			delegations : 
+				httpClient_DMSnackBiometricServer to httpClient_DispenserSnackToBiometricServer
+				 httpClient_DMSnackOrderServer to httpClient_DispenserSnackToOrderServer
+		}
+	} 
+	
+	boundary component def ProductSelectionCP { 
+		ports : 
+			selectionOn : BooleanIPT ; 
+			snackId : IntOPT ;
+	}
+	
+	component def DispenserMachineFlowCP { 
+		ports : 
+			selectionIsOn : BooleanOPT ; 
+			selectedSnackId : IntIPT ; 
+			dispenserCommandOut : DispenserProductOPT ; 
+			httpClient_DMSnackSensors : HTTPClientP ; 
+			httpClient_DMSnackBiometricServer : HTTPClientP ; 
+			httpClient_DMSnackOrderServer : HTTPClientP ;
+	} 
+	
+	boundary component def HardwareDispenserCP { 
+		ports : 
+			dispenserCommand : DispenserProductIPT ;
+	}
+	
+	component def DispenserDrinkMachineCP { 
+		ports : 
+			httpClient_DispenserDrinkToOrderServer : HTTPClientP ; 
+			httpClient_DispenserDrinkToBiometricServer : HTTPClientP ; 
+		
+		configuration { 
+			components : 
+				HardwareDispenserCP : HardwareDispenserCP { 
+					using ports : 
+						dispenserCommand : DispenserProductIPT ;
+				} 
+				
+				ProductSelectionCP : ProductSelectionCP { 
+					using ports : 
+						selectionOn : BooleanIPT ; snackId : IntOPT ;
+				} 
+				
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : 
+						sensors_Component : SensorIPT ;
+				} 
+				
+				DispenserMachineFlowCP : DispenserMachineFlowCP { 
+					using ports : 
+						selectionIsOn : BooleanOPT ; 
+						selectedSnackId : IntIPT ; 
+						dispenserCommandOut : DispenserProductOPT ; 
+						httpClient_DMSnackSensors : HTTPClientP ; 
+						httpClient_DMSnackBiometricServer : HTTPClientP ; 
+						httpClient_DMSnackOrderServer : HTTPClientP ;
+				} 
+			
+			connectors : 
+				biometricData : SensorCN bindings httpClient_DMSnackSensors = sensors_Component ; 
+				dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; 
+				selectedSnackId : IntCN bindings snackId = selectedSnackId ; 
+				authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; 
+			
+			delegations : 
+				httpClient_DMSnackBiometricServer to httpClient_DispenserDrinkToBiometricServer 
+				httpClient_DMSnackOrderServer to httpClient_DispenserDrinkToOrderServer
+		}
+	} 
+	
+	component def TapMachineCP { 
+		ports : 
+			httpClient_TapToBiometricServer : HTTPClientP ; 
+			httpClient_TapToOrderServer : HTTPClientP ; 
+			httpClient_TapToProductServer : HTTPClientP ; 
+		
+		configuration { 
+			components : 
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : 
+						sensors_Component : SensorIPT ;
+				} 
+				
+				TapFlowControllerCP : TapFlowControllerCP { 
+					using ports : 
+						httpClient_TapControllerToProductServer : HTTPClientP ; 
+						httpClient_TapControllerToOrderServer : HTTPClientP ; 
+						httpClient_TapControllerToBiometricServer : HTTPClientP ; 
+						tapReleasedCMD : BooleanOPT ; 
+						amountOfDrink : IntIPT ; 
+						httpClient_TapSensors : HTTPClientP ;
+				} 
+				
+				TapActuatorCP : TapActuatorCP { 
+					using ports : 
+						tapReleased : BooleanIPT ; 
+						amountDispensedTap : IntOPT ;
+				} 
+			
+			connectors : 
+				biometricData : SensorCN bindings httpClient_TapSensors = sensors_Component ; 
+				tapReleased : BooleanCN bindings tapReleasedCMD = tapReleased ; 
+				drinkAmount : IntCN bindings amountDispensedTap = amountOfDrink ; 
+			
+			delegations : 
+				httpClient_TapControllerToBiometricServer to httpClient_TapToBiometricServer
+				 httpClient_TapControllerToProductServer to httpClient_TapToProductServer
+				  httpClient_TapControllerToOrderServer to httpClient_TapToOrderServer
+		}
+	} 
+	
+	boundary component def TapActuatorCP { 
+		ports : 
+			tapReleased : BooleanIPT ; 
+			amountDispensedTap : IntOPT ;
+	}
+	
+	component def TapFlowControllerCP { 
+		ports : 
+			httpClient_TapControllerToProductServer : HTTPClientP ; 
+			httpClient_TapControllerToOrderServer : HTTPClientP ; 
+			httpClient_TapControllerToBiometricServer : HTTPClientP ; 
+			tapReleasedCMD : BooleanOPT ; 
+			amountOfDrink : IntIPT ; 
+			httpClient_TapSensors : HTTPClientP ;
+	}
+	
+	component def TotemCP { 
+		ports : 
+			httpClient_TotemToProductServer : HTTPClientP ; 
+			httpClient_TotemToOrderServer : HTTPClientP ; 
+			httpClient_TotemToBiometricServer : HTTPClientP ; 
+		
+		configuration { 
+			components : 
+				TotemFlowControllerCP : TotemFlowControllerCP { 
+					using ports : 
+						httpClient_TotemControllerToOrderServer : HTTPClientP ; 
+						httpClient_TotemControllerToProductServer : HTTPClientP ; 
+						httpClient_TotemControllerToBiometricServer : HTTPClientP ; 
+						httpClient_TotemSensors : HTTPClientP ; 
+						selectedProducts : OrderItemArrayIPT ; 
+						enableDisplay : BooleanOPT ; 
+						orderToPrint : OrderOPT ;
+				} 
+				
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : 
+						sensors_Component : SensorIPT ;
+				} 
+				
+				ReceiptPrinterCP : ReceiptPrinterCP { 
+					using ports : 
+						printerData : OrderIPT ;
+				} 
+				
+				MenuDisplayCP : MenuDisplayCP { 
+					using ports : 
+						enabled : BooleanIPT ; 
+						orderProducts : OrderItemArrayOPT ;
+				} 
+			
+			connectors : 
+				sensorData : SensorCN bindings httpClient_TotemSensors = sensors_Component ; 
+				printerData : OrderCN bindings orderToPrint = printerData ; 
+				enabled : BooleanCN bindings enableDisplay = enabled ; 
+				orderProducts : OrderItemArrayCN bindings orderProducts = selectedProducts ; 
+			
+			delegations : 
+				httpClient_TotemControllerToProductServer to httpClient_TotemToProductServer 
+				httpClient_TotemControllerToOrderServer to httpClient_TotemToOrderServer 
+				httpClient_TotemControllerToBiometricServer to httpClient_TotemToBiometricServer
+		}
+	}
+	
+	component def TotemFlowControllerCP { 
+		ports : 
+			httpClient_TotemControllerToOrderServer : HTTPClientP ; 
+			httpClient_TotemControllerToProductServer : HTTPClientP ; 
+			httpClient_TotemControllerToBiometricServer : HTTPClientP ; 
+			httpClient_TotemSensors : HTTPClientP ; 
+			selectedProducts : OrderItemArrayIPT ; 
+			enableDisplay : BooleanOPT ; 
+			orderToPrint : OrderOPT ;
+	} 
+	
+	boundary component def MenuDisplayCP { 
+		ports : 
+			enabled : BooleanIPT ; 
+			orderProducts : OrderItemArrayOPT ;
+	} 
+	
+	boundary component def ReceiptPrinterCP { 
+		ports : 
+			printerData : OrderIPT ;
+	} 
+	
+	component def PickupStationCP { 
+		ports : 
+			httpClient_PickupToOrderServer : HTTPClientP ; 
+			httpClient_PickupToBiometricServer : HTTPClientP ; 
+			
+		configuration { 
+			components : 
+				PickupDisplayCP : PickupDisplayCP { 
+					using ports : 
+						orderReadyList : OrderItemArrayIPT ;
+				} 
+				
+				PickupFlowControllerCP : PickupFlowControllerCP { 
+					using ports : 
+						compartmentToMove : IntOPT ; 
+						compartmentArrived : BooleanIPT ; 
+						readyOrders : OrderItemArrayOPT ; 
+						httpClient_PickupControllerToBiometricServer : HTTPClientP ; 
+						biometricRawIPT_Barcode : BiometricRawIPT ; 
+						sensorActive_Barcode : BooleanOPT ; 
+						orderAvailableController : PickupOrderAddedIPT ; 
+						compartmentCMDOpt : CompartmentCMDOPT ; 
+						pickupDetectedController : BooleanIPT ; 
+						httpClient_PickupSensors : HTTPClientP ; 
+						httpClient_PickupControllerToOrderServer : HTTPClientP ;
+				} 
+				
+				BiometricSensorsCP : BiometricSensorsCP { 
+					using ports : 
+						sensors_Component : SensorIPT ;
+				} 
+				
+				BarcodeReaderCP : BarcodeReaderCP { 
+					using ports : 
+						active_Barcode : BooleanIPT ; 
+						biometricRaw_Barcode : BiometricRawOPT ;
+				} 
+				
+				PickupConveyorCP : PickupConveyorCP {
+					using ports : 
+						compartmentID : IntIPT ; 
+						arrivedAtCompartment : BooleanOPT ;
+				} 
+				
+				CompartmentActuatorCP : CompartmentActuatorCP { 
+					using ports : 
+						compartmentCMD : CompartmentCMDIPT ; 
+						orderAvailable : PickupOrderAddedOPT ; 
+						pickupDetectedActuator : BooleanOPT ;
+				} 
+			
+			connectors : 
+				sensorsData : SensorCN bindings httpClient_PickupSensors = sensors_Component ; 
+				readyOrdersCN : OrderItemArrayCN bindings readyOrders = orderReadyList ; 
+				barcodeData : BiometricRawCN bindings biometricRaw_Barcode = biometricRawIPT_Barcode ; 
+				activeBarcode : BooleanCN bindings sensorActive_Barcode = active_Barcode ; 
+				compartmentCommand : CompartmentCMDCN bindings compartmentCMDOpt = compartmentCMD ; 
+				orderAdded : PickupOrderAddedCN bindings orderAvailable = orderAvailableController ; 
+				pickupDetected : BooleanCN bindings pickupDetectedActuator = pickupDetectedController ; 
+				compartment : IntCN bindings compartmentToMove = compartmentID ; 
+				moved : BooleanCN bindings arrivedAtCompartment = compartmentArrived ; 
+			
+			delegations : 
+				httpClient_PickupControllerToOrderServer to httpClient_PickupToOrderServer
+				 httpClient_PickupControllerToBiometricServer to httpClient_PickupToBiometricServer
+		}
+	}
+	
+	component def PickupFlowControllerCP { 
+		ports : 
+			compartmentToMove : IntOPT ;
+			compartmentArrived : BooleanIPT ; 
+			readyOrders : OrderItemArrayOPT ; 
+			httpClient_PickupControllerToBiometricServer : HTTPClientP ; 
+			biometricRawIPT_Barcode : BiometricRawIPT ; 
+			sensorActive_Barcode : BooleanOPT ; 
+			orderAvailableController : PickupOrderAddedIPT ; 
+			compartmentCMDOpt : CompartmentCMDOPT ; 
+			pickupDetectedController : BooleanIPT ; 
+			httpClient_PickupSensors : HTTPClientP ; 
+			httpClient_PickupControllerToOrderServer : HTTPClientP ;
+	}
+	
+	component def PickupConveyorCP { 
+		ports : 
+			compartmentID : IntIPT ; 
+			arrivedAtCompartment : BooleanOPT ;
+	}
+	
+	component def CompartmentActuatorCP {
+		ports : 
+			compartmentCMD : CompartmentCMDIPT ;
+			orderAvailable : PickupOrderAddedOPT ; 
+			pickupDetectedActuator : BooleanOPT ; 
+		
+		configuration { 
+			components : 
+				PickupSensorsCP : PickupSensorsCP { 
+					using ports : 
+						pickupDetected : BooleanOPT ;
+				} 
+			
+			delegations : 
+				pickupDetected to pickupDetectedActuator
+		} 
+	} 
+	
+	boundary component def PickupSensorsCP { 
+		ports : 
+			pickupDetected : BooleanOPT ;
+	} 
+	
+	boundary component def BarcodeReaderCP { 
+		ports : 
+			active_Barcode : BooleanIPT ; 
+			biometricRaw_Barcode : BiometricRawOPT ;
+	}
+	
+	boundary component def PickupDisplayCP { 
+		ports : 
+			orderReadyList : OrderItemArrayIPT ;
+	} 
+} 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
@@ -919,7 +1590,77 @@ package FoodFastPorts {
 	port def StringOPT { 
 		flow out String
 	}
-port def IntIPT { flow in Int } port def IntOPT { flow out Int } port def OrderIPT { flow in OrderDT } port def OrderOPT { flow out OrderDT } port def OrderProcessingIPT { flow in OrderProcessingDT } port def OrderProcessingOPT { flow out OrderProcessingDT } port def OrderItemArrayIPT { flow in OrderItemArrayDT } port def OrderItemArrayOPT { flow out OrderItemArrayDT } port def RealIPT { flow in Real } port def RealOPT { flow out Real } port def OrderChargeIPT { flow in OrderChargeDT } port def OrderChargeOPT { flow out OrderChargeDT } port def PaymentStatusIPT { flow in PaymentStatusEnum } port def PaymentStatusOPT { flow out PaymentStatusEnum } port def DispenserProductIPT { flow in DispenserProductDT } port def DispenserProductOPT { flow out DispenserProductDT } } 
+	
+	port def IntIPT { 
+		flow in Int
+	} 
+	port def IntOPT { 
+		flow out Int
+	} 
+	
+	port def OrderIPT { 
+		flow in OrderDT
+	} 
+	port def OrderOPT { 
+		flow out OrderDT
+	} 
+	
+	port def OrderProcessingIPT { 
+		flow in OrderProcessingDT
+	} 
+	port def OrderProcessingOPT { 
+		flow out OrderProcessingDT
+	} 
+	
+	port def OrderItemArrayIPT { 
+		flow in OrderItemArrayDT
+	} 
+	port def OrderItemArrayOPT { 
+		flow out OrderItemArrayDT
+	} 
+	
+	port def RealIPT { 
+		flow in Real
+	} 
+	port def RealOPT { 
+		flow out Real
+	} 
+	
+	port def OrderChargeIPT { 
+		flow in OrderChargeDT
+	} 
+	port def OrderChargeOPT { 
+		flow out OrderChargeDT
+	} 
+	
+	port def PaymentStatusIPT { 
+		flow in PaymentStatusEnum
+	} 
+	port def PaymentStatusOPT { 
+		flow out PaymentStatusEnum
+	} 
+	
+	port def DispenserProductIPT { 
+		flow in DispenserProductDT
+	} 
+	port def DispenserProductOPT { 
+		flow out DispenserProductDT
+	} 
+	
+	port def CompartmentCMDIPT { 
+		flow in CompartmentCMDEnum
+	} 
+	port def CompartmentCMDOPT { 
+		flow out CompartmentCMDEnum
+	} 
+	
+	port def PickupOrderAddedIPT { 
+		flow in PickupOrderAddedDT
+	} 
+	port def PickupOrderAddedOPT { 
+		flow out PickupOrderAddedDT
+	} 
+} 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
@@ -1027,6 +1768,7 @@ Requirement OrderManagementFR ( 4 ) {
 	
 	Requirement CreateOrderInMachineFR ( 4.1 ) { 
 		text = "\"O sistema deve permitir que o usuário crie pedidos em máquinas apropriadas, realizando o cálculo do valor devido conforme os itens selecionados.\"" 
+		satisfied by FoodFastComponents.CreateOrderCP ; 
 		
 		Requirement AuthenticateBiometricFR ( 3 ) { 
 			text = "\"O sistema deve permitir que o usuário realize autenticação por biometria.\""
@@ -1039,11 +1781,13 @@ Requirement OrderManagementFR ( 4 ) {
 		
 		Requirement ChargeOrderFR ( 4.4.1 ) { 
 			text = "\"O sistema deve realizar a cobrança do pedido conforme o fluxo operacional da máquina utilizada, podendo ocorrer antes ou depois do uso, conforme as regras do tipo de pedido.\""
-		satisfied by FoodFastComponents.PaymentProcessingCP ; } 
+			satisfied by FoodFastComponents.PaymentProcessingCP ; 
+		} 
 		
 		Requirement CheckPendingPaymentsFR ( 4.4.2 ) { 
 			text = "\"O sistema deve verificar se o usuário possui valores pendentes de pedidos anteriores que ainda não foram pagos, bloqueando a continuidade do processamento caso existam pendências.\""
-		satisfied by FoodFastComponents.CheckDebtsCP ; } 
+			satisfied by FoodFastComponents.CheckDebtsCP ; 
+		} 
 		
 		Requirement MachineSpecificProcessingFR ( 4.4.3 ) {
 			text = "\"O sistema deve executar o processamento adicional específico ao tipo de máquina na qual o pedido foi realizado.\""
@@ -1051,8 +1795,9 @@ Requirement OrderManagementFR ( 4 ) {
 	} 
 } 
 
-Requirement CreateOrderInTotenFR ( 4.1.1 ) { 
+Requirement CreateOrderInTotemFR ( 4.1.1 ) { 
 	text = "\"O sistema deve permitir que o usuário realize pedidos em totens, selecionando itens que serão preparados na cozinha.\"" 
+	satisfied by FoodFastComponents.TotemCP ; 
 	derive OrderManagementFR.CreateOrderInMachineFR ; 
 	
 	Requirement CheckItemAvailabilityFR ( 4.1.1.1 ) { 
@@ -1061,6 +1806,7 @@ Requirement CreateOrderInTotenFR ( 4.1.1 ) {
 	
 	Requirement GenerateOrderReceiptFR ( 4.1.1.2 ) { 
 		text = "\"O sistema deve gerar a nota de compra contendo o número do pedido, a cozinha de roteamento e o código de barras para retirada.\""
+		satisfied by FoodFastComponents.ReceiptPrinterCP ; 
 	} 
 	
 	Requirement ChargeBeforeConfirmationFR ( 4.1.1.3 ) { 
@@ -1068,13 +1814,14 @@ Requirement CreateOrderInTotenFR ( 4.1.1 ) {
 	}
 } 
 
-Requirement ProcessOrderFromTotenFR ( 4.4.3.1 ) { 
+Requirement ProcessOrderFromTotemFR ( 4.4.3.1 ) { 
 	text = "\"O sistema deve processar pedidos realizados em totens, encaminhando-os para a cozinha adequada após a cobrança.\"" 
 	derive OrderManagementFR.ProcessOrderFR.MachineSpecificProcessingFR ; 
 	
 	Requirement RouteOrderToKitchenFR ( 4.4.3.1.1 ) { 
 		text = "\"O sistema deve encaminhar o pedido para a cozinha apropriada conforme sua categoria.\""
-	satisfied by FoodFastComponents.KitchenRoutingCP ; }
+		satisfied by FoodFastComponents.KitchenRoutingCP ; 
+	}
 }
 
 Requirement ProcessOrderFromDrinkDispenserFR ( 4.4.3.2 ) { 
@@ -1093,11 +1840,13 @@ Requirement ProcessOrderFromTapFR ( 4.4.3.4 ) {
 	
 	Requirement CalculateFinalTapCostFR ( 4.4.3.4.1 ) { 
 		text = "\"O sistema deve calcular o custo final do pedido com base no volume total de bebida consumido.\""
-	satisfied by FoodFastComponents.PriceCalculationCP ; }
+		satisfied by FoodFastComponents.PriceCalculationCP ; 
+	}
 } 
 
 Requirement CreateOrderInDrinkDispenserFR ( 4.1.2 ) { 
 	text = "\"O sistema deve permitir que o usuário realize pedidos em máquinas de bebidas prontas (dispenser).\"" 
+	satisfied by FoodFastComponents.DispenserDrinkMachineCP ; 
 	derive OrderManagementFR.CreateOrderInMachineFR ; 
 	
 	Requirement CheckDrinkAvailabilityFR ( 4.1.2.1 ) { 
@@ -1111,6 +1860,7 @@ Requirement CreateOrderInDrinkDispenserFR ( 4.1.2 ) {
 
 Requirement CreateOrderInSnackDispenserFR ( 4.1.3 ) { 
 	text = "\"O sistema deve permitir que o usuário realize pedidos em máquinas de lanches prontos.\"" 
+	satisfied by FoodFastComponents.DispenserSnackMachineCP ; 
 	derive OrderManagementFR.CreateOrderInMachineFR ; 
 	
 	Requirement CheckSnackAvailabilityFR ( 4.1.3.1 ) { 
@@ -1124,6 +1874,7 @@ Requirement CreateOrderInSnackDispenserFR ( 4.1.3 ) {
 
 Requirement CreateOrderInTapFR ( 4.1.4 ) { 
 	text = "\"O sistema deve permitir que o usuário realize pedidos em torneiras de bebidas cobradas por volume consumido.\"" 
+	satisfied by FoodFastComponents.TapMachineCP ; 
 	derive OrderManagementFR.CreateOrderInMachineFR ; 
 	
 	Requirement CheckTapAvailabilityFR ( 4.1.4.1 ) { 
@@ -1132,6 +1883,7 @@ Requirement CreateOrderInTapFR ( 4.1.4 ) {
 	
 	Requirement MeasureDispensedVolumeFR ( 4.1.4.2 ) { 
 		text = "\"O sistema deve medir o volume de bebida dispensado, em mililitros, durante o uso.\""
+		satisfied by FoodFastComponents.TapActuatorCP ; 
 	} 
 	
 	Requirement PostUseChargeFR ( 4.1.4.3 ) { 
@@ -1147,10 +1899,12 @@ Requirement OrderPickupFR ( 5 ) {
 		
 		Requirement SeparateConveyorCompartmentsFR ( 5.1.1 ) { 
 			text = "“O sistema deve organizar a esteira em compartimentos individuais para armazenamento dos pedidos prontos.”"
+			satisfied by FoodFastComponents.CompartmentActuatorCP ; 
 		} 
 		
 		Requirement DisplayPickupOrdersFR ( 5.1.2 ) { 
 			text = "“O sistema deve exibir na interface da esteira todos os pedidos disponíveis, pendentes ou em preparação relacionados ao ponto de retirada.”"
+			satisfied by FoodFastComponents.PickupDisplayCP ; 
 		} 
 		
 		Requirement UpdatePickupOrderStatusFR ( 5.1.3 ) { 
@@ -1179,10 +1933,12 @@ Requirement OrderPickupFR ( 5 ) {
 		
 		Requirement MoveConveyorToUserFR ( 5.4.1 ) { 
 			text = "“O sistema deve mover a esteira até que o compartimento do pedido esteja posicionado em frente ao usuário identificado.”"
+			satisfied by FoodFastComponents.PickupConveyorCP ; 
 		} 
 		
 		Requirement OpenConveyorCompartmentFR ( 5.4.2 ) { 
 			text = "“O sistema deve abrir automaticamente o compartimento correspondente ao pedido após a identificação válida do usuário.”"
+			satisfied by FoodFastComponents.CompartmentActuatorCP ; 
 		} 
 		
 		Requirement ConfirmOrderPickupFR ( 5.4.3 ) { 
@@ -1193,6 +1949,7 @@ Requirement OrderPickupFR ( 5 ) {
 
 Requirement IdentifyPickupByBarcodeFR ( 5.2.1.1 ) { 
 	text = "“O sistema deve identificar o pedido do usuário utilizando o código de barras fornecido no momento da retirada.”" 
+	satisfied by FoodFastComponents.BarcodeReaderCP ; 
 	derive OrderPickupFR.IdentifyUserForPickupFR.IdentifyPickupRequestFR ; 
 	
 	Requirement CapturePickupBarcodeFR ( 5.2.1.1.1 ) { 
