@@ -1495,6 +1495,197 @@ package FoodFastComponents {
 		ports : 
 			orderReadyList : OrderItemArrayIPT ;
 	} 
+	
+	activity def RetrieveProductAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+		body { 
+			actions : 
+				BuildRetrieveProductQueryAN : BuildRetrieveProductQueryAN { 
+					using pins : 
+						req : HTTPRequestDT ;
+				} 
+				
+				BuildRetrieveProductResponseAN : BuildRetrieveProductResponseAN { 
+					using pins : 
+						res : DBResponseDT ;
+				} 
+			
+			delegate p2 to BuildRetrieveProductQueryAN 
+			delegate p0 to req 
+			delegate p3 to res
+			delegate p1 to BuildRetrieveProductResponseAN
+		}
+	} 
+	
+	action def BuildRetrieveProductQueryAN ( req : HTTPRequestDT ) : DBQueryDT { 
+		constraint : 
+			post-condition BuildRetrieveProductQueryEQ 
+		delegate req to req 
+		delegate BuildRetrieveProductQueryAN to query
+	} 
+	
+	action def BuildRetrieveProductResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT { 
+		constraint : 
+			post-condition BuildRetrieveProductResponseEQ 
+		delegate dbRes to dbRes 
+		delegate BuildRetrieveProductResponseAN to res
+	} 
+	
+	constraint BuildRetrieveProductQueryEQ ( req : HTTPRequestDT ) : ( query : DBQueryDT ) { } 
+	constraint BuildRetrieveProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def DeleteProductAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+		body { 
+			actions : 
+				BuildDeleteProductQueryAN : BuildDeleteProductQueryAN { 
+					using pins : 
+						req : HTTPRequestDT ;
+				} 
+				
+				BuildDeleteProductResponseAN : BuildDeleteProductResponseAN { 
+					using pins : 
+						res : DBResponseDT ;
+				} 
+			
+			delegate p2 to BuildDeleteProductQueryAN 
+			delegate p0 to req 
+			delegate p3 to res
+			delegate p1 to BuildDeleteProductResponseAN
+		}
+	} 
+	
+	action def BuildDeleteProductQueryAN ( req : HTTPRequestDT ) : DBQueryDT { 
+		constraint : 
+			post-condition BuildDeleteProductQueryEQ 
+		delegate req to req 
+		delegate BuildDeleteProductQueryAN to qry
+	} 
+	
+	action def BuildDeleteProductResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT { 
+		constraint : 
+			post-condition BuildDeleteProductResponseEQ 
+		delegate dbRes to dbRes 
+		delegate BuildDeleteProductResponseAN to res
+	} 
+	
+	constraint BuildDeleteProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
+	constraint BuildDeleteProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def CreateProductCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+		body { 
+			actions : 
+				BuildCreateProductQueryAN : BuildCreateProductQueryAN { 
+					using pins : 
+						req : HTTPRequestDT ;
+				} 
+				
+				BuildCreateProductResponseAN : BuildCreateProductResponseAN { 
+					using pins : 
+						res : DBResponseDT ;
+				} 
+			
+			delegate p2 to BuildCreateProductQueryAN
+			delegate p0 to req
+			delegate p3 to res
+			delegate p1 to BuildCreateProductResponseAN
+		}
+	} 
+	
+	action def BuildCreateProductQueryAN ( req : HTTPRequestDT ) : DBQueryDT { 
+		constraint : 
+			post-condition BuildCreateProductQueryEQ 
+			pre-condition BuildCreateProductQueryPriceGTZeroEQ
+		delegate req to req 
+		delegate BuildCreateProductQueryAN to qry
+	delegate req to reqVerify } 
+	
+	action def BuildCreateProductResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT { 
+		constraint : 
+			post-condition BuildCreateProductResponseEQ 
+		delegate dbRes to dbRes 
+		delegate BuildCreateProductResponseAN to res
+	} 
+	
+	constraint BuildCreateProductQueryPriceGTZeroEQ ( reqVerify : HTTPRequestDT ) { }
+	constraint BuildCreateProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
+	constraint BuildCreateProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def UpdateProductCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+		body { 
+			actions : 
+				BuildUpdateProductQueryAN : BuildUpdateProductQueryAN { 
+					using pins : 
+						req : HTTPRequestDT ;
+				} 
+				
+				BuildUpdateProductResponseAN : BuildUpdateProductResponseAN { 
+					using pins : 
+						res : DBResponseDT ;
+				} 
+			
+			delegate p2 to BuildUpdateProductQueryAN
+			delegate p0 to req
+			delegate p3 to res
+			delegate p1 to BuildUpdateProductResponseAN
+		}
+	} 
+	
+	action def BuildUpdateProductQueryAN ( req : HTTPRequestDT ) : DBQueryDT { 
+		constraint : 
+			post-condition BuildUpdateProductQueryEQ 
+			pre-condition BuildUpdateProductQueryPriceGTZeroEQ
+		delegate req to req
+		delegate BuildUpdateProductQueryAN to qry
+		delegate req to reqVerify
+	} 
+	
+	action def BuildUpdateProductResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT { 
+		constraint : 
+			post-condition BuildUpdateProductResponseEQ 
+		delegate dbRes to dbRes 
+		delegate BuildUpdateProductResponseAN to res
+	} 
+	
+	constraint BuildUpdateProductQueryPriceGTZeroEQ ( reqVerify : HTTPRequestDT ) { }
+	constraint BuildUpdateProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
+	constraint BuildUpdateProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+
+	activity def GetMachineStockCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+		body { 
+			actions : 
+				BuildGetMachineStockQueryAN : BuildGetMachineStockQueryAN { 
+					using pins : 
+						req : HTTPRequestDT ;
+				} 
+				
+				BuildGetMachineStockResponseAN : BuildGetMachineStockResponseAN { 
+					using pins : 
+						res : DBResponseDT ;
+				} 
+			
+			delegate p2 to BuildGetMachineStockQueryAN
+			delegate p0 to req
+			delegate p3 to res
+			delegate p1 to BuildGetMachineStockResponseAN
+		}
+	} 
+	
+	action def BuildGetMachineStockQueryAN ( req : HTTPRequestDT ) : DBQueryDT { 
+		constraint : 
+			post-condition BuildGetMachineStockQueryEQ
+		delegate req to req 
+		delegate BuildGetMachineStockQueryAN to qry
+	} 
+	
+	action def BuildGetMachineStockResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT { 
+		constraint : 
+			post-condition BuildGetMachineStockResponseEQ 
+		delegate dbRes to dbRes 
+		delegate BuildGetMachineStockResponseAN to res
+	} 
+	
+	constraint BuildGetMachineStockQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
+	constraint BuildGetMachineStockResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+		
 } 
 
 package FoodFastPorts { 
