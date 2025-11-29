@@ -89,7 +89,7 @@ package SysADLTypes {
 	datatype DBQueryDT { 
 		attributes : 
 			operation : DBOperationEnum ; 
-			target : String ; 
+			table : String ; 
 			content : String ;
 	} 
 	enum DBOperationEnum { 
@@ -149,7 +149,8 @@ package SysADLTypes {
 			email : String ; 
 			birthdate : DateDT ; 
 			phone : String ;
-	id : Int ; } 
+			id : Int ; 
+	} 
 	
 	datatype BiometricRawDT { 
 		attributes : 
@@ -253,6 +254,28 @@ package SysADLTypes {
 		attributes : 
 			orderId : Int ; 
 			pickupId : Int ;
+	} 
+	
+	enum PaymentMethodEnum { 
+		DEBIT_CARD , 
+		CREDIT_CARD
+	} 
+	
+	datatype PaymentMethodDT { 
+		attributes : 
+			id : Int ; 
+			number : String ;
+			holderName : String ;
+			expirationMonth : MonthsVT ;
+			expirationYear : YearsVT ;
+			CVV: String ;
+			method: PaymentMethodEnum;
+	}
+	
+	datatype CredentialAccessDT { 
+		attributes : 
+			cpf : String ;
+			password : String ;
 	} 
 }
 
@@ -574,7 +597,7 @@ package FoodFastComponents {
 				Totem_ProductServer : HTTPCN bindings httpClient_TotemToProductServer = httpServer_Product_private ; 
 				PickupBiometricServer : HTTPCN bindings httpClient_PickupToBiometricServer = httpServer_Biometric ; 
 				Pickup_OrderServer : HTTPCN bindings httpClient_PickupToOrderServer = httpServer_Order_private ; 
-		}
+		Totem_UserServer : HTTPCN bindings httpClient_BiometricToten = httpServer_User ; }
 	} 
 	
 	boundary component def DatabaseCP { 
@@ -595,7 +618,7 @@ package FoodFastComponents {
 							dbClient_UserAuth : DBClientP ;
 					} 
 					
-					UserCreateCP : UserCreateCP { 
+					UserCreateCP : CreatePersonalInfoCP { 
 						using ports : 
 							httpServer_UserCreate : HTTPServiceP ; 
 							dbClient_UserCreate : DBClientP ;
@@ -607,7 +630,7 @@ package FoodFastComponents {
 							dbClient_UserDelete : DBClientP ;
 					} 
 					
-					UserUpdateCP : UserUpdateCP { 
+					UserUpdateCP : UpdatePersonalInfoCP { 
 						using ports : httpServer_UserUpdate : HTTPServiceP ; 
 						dbClient_UserUpdate : DBClientP ;
 					} 
@@ -618,39 +641,51 @@ package FoodFastComponents {
 							dbClient_UserRetrieve : DBClientP ;
 					} 
 					
-					delegations : 
-						httpServer_UserAuth to httpServer_User
-						httpServer_UserCreate to httpServer_User 
-						httpServer_UserDelete to httpServer_User 
-						httpServer_UserUpdate to httpServer_User 
-						dbClient_UserUpdate to dbClient_User 
-						dbClient_UserDelete to dbClient_User 
-						dbClient_UserCreate to dbClient_User 
-						dbClient_UserRetrieve to dbClient_User 
-						httpServer_UserRetrieve to httpServer_User 
-						dbClient_UserAuth to dbClient_User
+					CreatePaymentMethodsCP : CreatePaymentMethodsCP { 
+						using ports : 
+							httpServer_UserCreatePayment : HTTPServiceP ; 
+							dbClient_UserCreatePayment : DBClientP ;
+					} 
+					
+					UpdatePaymentMethodsCP : UpdatePaymentMethodsCP { 
+						using ports : 
+							dbClient_UserUpdatePayment : DBClientP ; 
+							httpServer_UserUpdatePayment : HTTPServiceP ;
+					} 
+					
+				delegations : 
+					httpServer_UserAuth to httpServer_User
+					httpServer_UserCreate to httpServer_User 
+					httpServer_UserDelete to httpServer_User 
+					httpServer_UserUpdate to httpServer_User 
+					dbClient_UserUpdate to dbClient_User 
+					dbClient_UserDelete to dbClient_User 
+					dbClient_UserCreate to dbClient_User 
+					dbClient_UserRetrieve to dbClient_User 
+					httpServer_UserRetrieve to httpServer_User 
+					dbClient_UserAuth to dbClient_User
+					dbClient_UserCreatePayment to dbClient_User 
+					dbClient_UserUpdatePayment to dbClient_User 
+					httpServer_UserCreatePayment to httpServer_User 
+					httpServer_UserUpdatePayment to httpServer_User 
 			}
 	}
-	
-	boundary component def UserCreateCP { 
+	component def CreatePersonalInfoCP { 
 		ports : 
 			httpServer_UserCreate : HTTPServiceP ; 
 			dbClient_UserCreate : DBClientP ;
-	} 
-	
-	boundary component def UserUpdateCP { 
+	}
+	component def UpdatePersonalInfoCP { 
 		ports : 
 			httpServer_UserUpdate : HTTPServiceP ; 
 			dbClient_UserUpdate : DBClientP ;
-	} 
-	
-	boundary component def UserRetrieveCP { 
+	}
+	component def UserRetrieveCP { 
 		ports : 
 			httpServer_UserRetrieve : HTTPServiceP ; 
 			dbClient_UserRetrieve : DBClientP ;
-	} 
-	
-	boundary component def UserDeleteCP { 
+	}
+	component def UserDeleteCP { 
 		ports : 
 			httpServer_UserDelete : HTTPServiceP ; 
 			dbClient_UserDelete : DBClientP ; 
@@ -658,9 +693,8 @@ package FoodFastComponents {
 			port def DBResponseIPT { 
 				flow in DBResponseDT
 			}
-	} 
-	
-	boundary component def UserAuthCP { 
+	}
+	component def UserAuthCP { 
 		ports : 
 			httpServer_UserAuth : HTTPServiceP ; 
 			dbClient_UserAuth : DBClientP ;
@@ -681,18 +715,19 @@ package FoodFastComponents {
 		ports : 
 			active_Camera : BooleanIPT ; 
 			biometricRaw_Camera : BiometricRawOPT ;
-	} boundary
-	component def RegisterBiometricCP { 
+	} 
+	
+	boundary component def RegisterBiometricCP { 
 		ports : 
 			dbClient_RegisterBiometric : DBClientP ; 
 			httpService_RegisterBiometric : HTTPServiceP ;
-	} boundary
-	component def RemoveBiometricCP { 
+	}
+	boundary component def RemoveBiometricCP { 
 		ports : 
 			httpService_RemoveBiometric : HTTPServiceP ; 
 			dbClient_RemoveBiometric : DBClientP ;
-	} boundary
-	component def BiometricRecognitionCP { 
+	} 
+	boundary component def BiometricRecognitionCP { 
 		ports : 
 			dbClient_BiometricRecognition : DBClientP ; 
 			httpService_BiometricRecognition : HTTPServiceP ;
@@ -772,25 +807,19 @@ package FoodFastComponents {
 	
 	component def BiometricControllerCP { 
 		ports : 
-			 
 			biometricRawIPT_Fingerprint : BiometricRawIPT ; 
 			biometricRawIPT_Camera : BiometricRawIPT ; 
-			 
 			sensorActive_Fingerprint : BooleanOPT ; 
 			sensorActive_Camera : BooleanOPT ;
-	sensors_Controller : SensorIPT ; }
+			sensors_Controller : SensorIPT ; 
+	}
 	
 	component def RegisterBiometricTotemCP { 
 		ports : 
 			httpClient_BiometricTotem : HTTPClientP [ 1 , 2 ] ; 
 		configuration { 
 			components : 
-				BiometricTotenProcessorCP : BiometricTotemProcessorCP { 
-					using ports : 
-						httpClient_BiometricTotenProcessor_external : HTTPClientP ; 
-						httpClient_BiometricTotenProcessor_internal : HTTPClientP ; 
-						cpfString_BiometricToten : StringIPT ;
-				} 
+				 
 				
 				KeywordCP : KeywordCP { 
 					using ports : keywordOutput : StringOPT ;
@@ -800,12 +829,7 @@ package FoodFastComponents {
 					using ports : sensors_Component : SensorIPT ;
 				} 
 			
-			connectors : 
-				cpfConnector : StringCN bindings keywordOutput = cpfString_BiometricToten ; 
-				sensorData : SensorCN bindings httpClient_BiometricTotenProcessor_internal = sensors_Component ;
-				
-			delegations : 
-				httpClient_BiometricTotenProcessor_external to httpClient_BiometricTotem }
+			BiometricTotemProcessorCP : BiometricTotemProcessorCP { using ports : httpClient_BiometricTotemProcessor_external : HTTPClientP ; httpClient_BiometricTotemProcessor_internal : HTTPClientP ; cpfString_BiometricTotem : StringIPT ; enableSelecion_Totem : BooleanOPT ; selectedBiometricType : BiometricTypeIPT ; } SelectBiometricTypeCP : SelectBiometricTypeCP { using ports : biometricType : BiometricTypeOPT ; enableSelection_BiometricType : BooleanIPT ; } connectors : sensorData : SensorCN bindings httpClient_BiometricTotemProcessor_internal = sensors_Component ; cpfConnector : StringCN bindings keywordOutput = cpfString_BiometricTotem ; biometricType : BiometricTypeCN bindings biometricType = selectedBiometricType ; enableSelection : BooleanCN bindings enableSelecion_Totem = enableSelection_BiometricType ; delegations : httpClient_BiometricTotemProcessor_external to httpClient_BiometricTotem }
 	}
 	
 	component def ProductServerCP { 
@@ -863,21 +887,18 @@ package FoodFastComponents {
 	
 	boundary component def AdminFrontendCP { 
 		ports : httpClient_AdminFrontend : HTTPClientP ;
-	} 
-	
-	boundary component def CreateProductCP { 
+	}
+	component def CreateProductCP { 
 		ports : 
 			httpServer_CreateProduct : HTTPServiceP ; 
 			dbClient_CreateProduct : DBClientP ; 
-	} 
-	
-	boundary component def UpdateProductCP { 
+	}
+	component def UpdateProductCP { 
 		ports : 
 			httpServer_UpdateProduct : HTTPServiceP ; 
 			dbClient_UpdateProduct : DBClientP ; 
-	} 
-	
-	boundary component def DeleteProductCP { 
+	}
+	component def DeleteProductCP { 
 		ports : 
 			httpServer_DeleteProduct : HTTPServiceP ; 
 			dbClient_DeleteProduct : DBClientP ;
@@ -888,8 +909,7 @@ package FoodFastComponents {
 			httpServer_RetrieveProduct : HTTPServiceP ; 
 			dbClient_RetrieveProduct : DBClientP ;
 	}
-	
-	boundary component def GetMachineStockCP { 
+	component def GetMachineStockCP { 
 		ports : 
 			httpServer_CheckAvailabilityProduct : HTTPServiceP ; 
 			dbClient_CheckAvailabilityProduct : DBClientP ;
@@ -899,7 +919,7 @@ package FoodFastComponents {
 		ports : 
 			httpClient_BiometricTotemProcessor_external : HTTPClientP ; 
 			httpClient_BiometricTotemProcessor_internal : HTTPClientP ; cpfString_BiometricTotem : StringIPT ;
-	} 
+	enableSelecion_Totem : BooleanOPT ; selectedBiometricType : BiometricTypeIPT ; } 
 	
 	boundary component def KeywordCP { 
 		ports : keywordOutput : StringOPT ;
@@ -962,21 +982,18 @@ package FoodFastComponents {
 				httpClient_CheckItemsProcessing to httpClient_CheckItemServer 
 				dbClient_CreateOrder to dbClient_Order 
 				httpServer_CreateOrder to httpServer_Order_private }
-	} 
-	
-	boundary component def RetrieveOrderCP { 
+	}
+	component def RetrieveOrderCP { 
 		ports : 
 			httpServer_RetrieveOrder : HTTPServiceP ; 
 			dbClient_RetrieveOrder : DBClientP ;
-	} 
-	
-	boundary component def UpdateOrderCP { 
+	}
+	component def UpdateOrderCP { 
 		ports : 
 			httpServer_UpdateOrder : HTTPServiceP ; 
 			dbClient_UpdateOrder : DBClientP ;
-	} 
-
-	boundary component def CheckDebtsCP { 
+	}
+	component def CheckDebtsCP { 
 		ports :  
 			dbClient_CheckDebts : DBClientP ;  
 			httpServer_CheckDebts : HTTPServiceP [ 1 , 2 ] ;
@@ -1006,7 +1023,7 @@ package FoodFastComponents {
 				CheckItemsAvailabilityCP : CheckItemsAvailabilityCP { 
 					using ports : 
 						httpClient_CheckItemsAvailability : HTTPClientP ; 
-						items_CheckItemsAvailability : OrderItemArrayIPT ; 
+						order_CheckItemsAvailability : OrderIPT ; 
 						availibility : BooleanOPT ;
 				} 
 				
@@ -1020,12 +1037,12 @@ package FoodFastComponents {
 						paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; 
 						httpClient_CheckDebtsPCoordinator : HTTPClientP ; 
 						availibility_Coordinator : BooleanIPT ; 
-						items_CIACoordinator : OrderItemArrayOPT ;
+						order_CIACoordinator : OrderOPT ;
 				} 
 			
 			connectors : 
 				allProductsAvailable : BooleanCN bindings availibility = availibility_Coordinator ; 
-				itemsToAvaluation : OrderItemArrayCN bindings items_CIACoordinator = items_CheckItemsAvailability ; 
+				orderToAvaluation : OrderCN bindings order_CIACoordinator = order_CheckItemsAvailability ; 
 				orderToAdditionalProcessing : OrderCN bindings order_OrderProcessingCoordinator = order_AdditionalProcessing ; 
 				additionalProcessingResult : OrderProcessingCN bindings orderProcessing_AdditionalProcessing = orderProcessing_OrderProcessingCoordinator ; 
 				paymentRequest : OrderChargeCN bindings orderCharge_OrderProcessingCoordinator = orderCharge_PaymentProcessing ; 
@@ -1038,9 +1055,8 @@ package FoodFastComponents {
 				httpClient_CheckItemsAvailability to httpClient_CheckItemsProcessing 
 				dbClient_PaymentProcessig to dbClient_ProcessingOrder 
 		}
-	} 
-	
-	boundary component def KitchenRoutingCP { 
+	}
+	component def KitchenRoutingCP { 
 		ports : 
 			orderItems_Routing : OrderItemArrayIPT ; 
 			kitchenId_Routing : IntOPT ;
@@ -1056,7 +1072,7 @@ package FoodFastComponents {
 			paymentResult_OrderProcessingCoordinator : PaymentStatusIPT ; 
 			httpClient_CheckDebtsPCoordinator : HTTPClientP ; 
 			availibility_Coordinator : BooleanIPT ; 
-			items_CIACoordinator : OrderItemArrayOPT ;
+			order_CIACoordinator : OrderOPT ;
 	}
 	
 	component def AdditionalProcessingCP { 
@@ -1098,16 +1114,14 @@ package FoodFastComponents {
 				order_APCoordinator to order_AdditionalProcessing 
 				orderProcessing_APCoordinator to orderProcessing_AdditionalProcessing
 		}
-	} 
-	
-	boundary component def PaymentProcessingCP { 
+	}
+	component def PaymentProcessingCP { 
 		ports : 
 			orderCharge_PaymentProcessing : OrderChargeIPT ; 
 			paymentResult_PaymentProcessing : PaymentStatusOPT ; 
 			dbClient_PaymentProcessig : DBClientP ;
-	} 
-	
-	boundary component def PriceCalculationCP { 
+	}
+	component def PriceCalculationCP { 
 		ports : 
 			orderItems_Pricing : OrderItemArrayIPT ; 
 			orderPrice_Pricing : RealOPT ;
@@ -1120,16 +1134,14 @@ package FoodFastComponents {
 			orderItems_ToPricing : OrderItemArrayOPT ; 
 			kitchenId_ByRouting : IntIPT ; orderPrice_ByPricing : RealIPT ; 
 			order_APCoordinator : OrderIPT ;
-	} 
-	
-	boundary component def CheckItemsAvailabilityCP { 
+	}
+	component def CheckItemsAvailabilityCP { 
 		ports : 
 			httpClient_CheckItemsAvailability : HTTPClientP ; 
-			items_CheckItemsAvailability : OrderItemArrayIPT ; 
+			order_CheckItemsAvailability : OrderIPT ; 
 			availibility : BooleanOPT ;
-	} 
-	
-	boundary component def CreateOrderCP { 
+	}
+	component def CreateOrderCP { 
 		ports : 
 			httpClient_CreateOrder : DBClientP ; 
 			httpServer_CreateOrder : HTTPServiceP ; 
@@ -1437,7 +1449,7 @@ package FoodFastComponents {
 			
 			delegations : 
 				httpClient_PickupControllerToOrderServer to httpClient_PickupToOrderServer
-				 httpClient_PickupControllerToBiometricServer to httpClient_PickupToBiometricServer
+				httpClient_PickupControllerToBiometricServer to httpClient_PickupToBiometricServer
 		}
 	}
 	
@@ -1454,8 +1466,7 @@ package FoodFastComponents {
 			pickupDetectedController : BooleanIPT ; 
 			httpClient_PickupSensors : HTTPClientP ; 
 			httpClient_PickupControllerToOrderServer : HTTPClientP ;
-	}
-	
+	} boundary
 	component def PickupConveyorCP { 
 		ports : 
 			compartmentID : IntIPT ; 
@@ -1494,6 +1505,18 @@ package FoodFastComponents {
 	boundary component def PickupDisplayCP { 
 		ports : 
 			orderReadyList : OrderItemArrayIPT ;
+	} 
+	
+	
+	component def CreatePaymentMethodsCP { 
+		ports : 
+			httpServer_UserCreatePayment : HTTPServiceP ; 
+			dbClient_UserCreatePayment : DBClientP ;
+	}
+	component def UpdatePaymentMethodsCP { 
+		ports :
+			dbClient_UserUpdatePayment : DBClientP ; 
+			httpServer_UserUpdatePayment : HTTPServiceP ;
 	} 
 	
 	activity def RetrieveProductAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
@@ -1685,7 +1708,1156 @@ package FoodFastComponents {
 	
 	constraint BuildGetMachineStockQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
 	constraint BuildGetMachineStockResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
-		
+	
+	activity def CreatePersonalInfoCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	
+	    body {
+	        actions :
+	            ValidateCreatePersonalInfoAN : ValidateCreatePersonalInfoAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCreatePersonalInfoQueryAN : BuildCreatePersonalInfoQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCreatePersonalInfoResponseAN : BuildCreatePersonalInfoResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildCreatePersonalInfoQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildCreatePersonalInfoResponseAN
+	    }
+	}
+	
+	action def ValidateCreatePersonalInfoAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateAgeEQ
+	        pre-condition ValidateCPFEQ
+	    delegate req to req
+	}
+	
+	action def BuildCreatePersonalInfoQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildCreatePersonalInfoQueryEQ
+	    delegate req to req
+	    delegate BuildCreatePersonalInfoQueryAN to qry
+	}
+	
+	action def BuildCreatePersonalInfoResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildCreatePersonalInfoResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildCreatePersonalInfoResponseAN to res
+	}
+	
+	constraint ValidateAgeEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateCPFEQ ( req : HTTPRequestDT ) { }
+	constraint BuildCreatePersonalInfoQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildCreatePersonalInfoResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def UpdatePersonalInfoCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUpdatePersonalInfoAN : ValidateUpdatePersonalInfoAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdatePersonalInfoQueryAN : BuildUpdatePersonalInfoQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdatePersonalInfoResponseAN : BuildUpdatePersonalInfoResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUpdatePersonalInfoQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUpdatePersonalInfoResponseAN
+	    }
+	}
+	
+	action def ValidateUpdatePersonalInfoAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateAgeEQ
+	        pre-condition ValidateCPFEQ
+	    delegate req to req
+	}
+	
+	action def BuildUpdatePersonalInfoQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUpdatePersonalInfoQueryEQ
+	    delegate req to req
+	    delegate BuildUpdatePersonalInfoQueryAN to qry
+	}
+	
+	action def BuildUpdatePersonalInfoResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUpdatePersonalInfoResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUpdatePersonalInfoResponseAN to res
+	}
+	
+	constraint BuildUpdatePersonalInfoQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUpdatePersonalInfoResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def UserDeleteCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUserDeleteAN : ValidateUserDeleteAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserDeleteQueryAN : BuildUserDeleteQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserDeleteResponseAN : BuildUserDeleteResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUserDeleteQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUserDeleteResponseAN
+	    }
+	}
+	
+	action def ValidateUserDeleteAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateDeleteRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildUserDeleteQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUserDeleteQueryEQ
+	    delegate req to req
+	    delegate BuildUserDeleteQueryAN to qry
+	}
+	
+	action def BuildUserDeleteResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUserDeleteResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUserDeleteResponseAN to res
+	}
+	
+	constraint ValidateDeleteRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildUserDeleteQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUserDeleteResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def UserRetrieveAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUserRetrieveAN : ValidateUserRetrieveAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserRetrieveQueryAN : BuildUserRetrieveQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserRetrieveResponseAN : BuildUserRetrieveResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUserRetrieveQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUserRetrieveResponseAN
+	    }
+	}
+	
+	action def ValidateUserRetrieveAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateRetrieveIdEQ
+	    delegate req to req
+	}
+	
+	action def BuildUserRetrieveQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUserRetrieveQueryEQ
+	    delegate req to req
+	    delegate BuildUserRetrieveQueryAN to qry
+	}
+	
+	action def BuildUserRetrieveResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUserRetrieveResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUserRetrieveResponseAN to res
+	}
+	activity def UserAuthAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUserAuthAN : ValidateUserAuthAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserAuthQueryAN : BuildUserAuthQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUserAuthResponseAN : BuildUserAuthResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUserAuthQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUserAuthResponseAN
+	    }
+	}
+	
+	action def ValidateUserAuthAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateCredentialsFormatEQ
+	    delegate req to req
+	}
+	
+	action def BuildUserAuthQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUserAuthQueryEQ
+	    delegate req to req
+	    delegate BuildUserAuthQueryAN to qry
+	}
+	
+	action def BuildUserAuthResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUserAuthResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUserAuthResponseAN to res
+	}
+	
+	constraint ValidateRetrieveIdEQ ( req : HTTPRequestDT ) { }
+	constraint BuildUserRetrieveQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUserRetrieveResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	constraint ValidateCredentialsFormatEQ ( req : HTTPRequestDT ) { }
+	constraint BuildUserAuthQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUserAuthResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def CreatePaymentMethodsAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateCreatePaymentMethodAN : ValidateCreatePaymentMethodAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCreatePaymentMethodQueryAN : BuildCreatePaymentMethodQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCreatePaymentMethodResponseAN : BuildCreatePaymentMethodResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildCreatePaymentMethodQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildCreatePaymentMethodResponseAN
+	    }
+	}
+	
+	action def ValidateCreatePaymentMethodAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateCardNumberEQ
+	        pre-condition ValidateCardExpirationEQ
+	        pre-condition ValidateCardCVVEQ
+	    delegate req to req
+	}
+	
+	action def BuildCreatePaymentMethodQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildCreatePaymentMethodQueryEQ
+	    delegate req to req
+	    delegate BuildCreatePaymentMethodQueryAN to qry
+	}
+	
+	action def BuildCreatePaymentMethodResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildCreatePaymentMethodResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildCreatePaymentMethodResponseAN to res
+	}
+	
+	activity def UpdatePaymentMethodsAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUpdatePaymentMethodAN : ValidateUpdatePaymentMethodAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdatePaymentMethodQueryAN : BuildUpdatePaymentMethodQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdatePaymentMethodResponseAN : BuildUpdatePaymentMethodResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUpdatePaymentMethodQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUpdatePaymentMethodResponseAN
+	    }
+	}
+	
+	action def ValidateUpdatePaymentMethodAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidatePaymentIdEQ
+	        pre-condition ValidateCardNumberEQ
+	        pre-condition ValidateCardExpirationEQ
+	        pre-condition ValidateCardCVVEQ
+	    delegate req to req
+	}
+	
+	action def BuildUpdatePaymentMethodQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUpdatePaymentMethodQueryEQ
+	    delegate req to req
+	    delegate BuildUpdatePaymentMethodQueryAN to qry
+	}
+	
+	action def BuildUpdatePaymentMethodResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUpdatePaymentMethodResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUpdatePaymentMethodResponseAN to res
+	}
+	
+	constraint ValidateCardNumberEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateCardExpirationEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateCardCVVEQ ( req : HTTPRequestDT ) { }
+	constraint BuildCreatePaymentMethodQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildCreatePaymentMethodResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	constraint ValidatePaymentIdEQ ( req : HTTPRequestDT ) { }
+	constraint BuildUpdatePaymentMethodQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUpdatePaymentMethodResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def RegisterBiometricAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateRegisterBiometricAN : ValidateRegisterBiometricAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRegisterBiometricQueryAN : BuildRegisterBiometricQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRegisterBiometricResponseAN : BuildRegisterBiometricResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildRegisterBiometricQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildRegisterBiometricResponseAN
+	    }
+	}
+	
+	action def ValidateRegisterBiometricAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateBiometricDataEQ
+	        pre-condition ValidateUserExistsEQ
+	    delegate req to req
+	}
+	
+	action def BuildRegisterBiometricQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildRegisterBiometricQueryEQ
+	    delegate req to req
+	    delegate BuildRegisterBiometricQueryAN to qry
+	}
+	
+	action def BuildRegisterBiometricResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildRegisterBiometricResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildRegisterBiometricResponseAN to res
+	}
+	
+	constraint ValidateBiometricDataEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateUserExistsEQ ( req : HTTPRequestDT ) { }
+	constraint BuildRegisterBiometricQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildRegisterBiometricResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def RemoveBiometricAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateRemoveBiometricAN : ValidateRemoveBiometricAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRemoveBiometricQueryAN : BuildRemoveBiometricQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRemoveBiometricResponseAN : BuildRemoveBiometricResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildRemoveBiometricQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildRemoveBiometricResponseAN
+	    }
+	}
+	
+	action def ValidateRemoveBiometricAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateRemoveBiometricRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildRemoveBiometricQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildRemoveBiometricQueryEQ
+	    delegate req to req
+	    delegate BuildRemoveBiometricQueryAN to qry
+	}
+	
+	action def BuildRemoveBiometricResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildRemoveBiometricResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildRemoveBiometricResponseAN to res
+	}
+	
+	constraint ValidateRemoveBiometricRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildRemoveBiometricQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildRemoveBiometricResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def BiometricRecognitionAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateRecognitionInputAN : ValidateRecognitionInputAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildIdentifyBiometricQueryAN : BuildIdentifyBiometricQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            // Ação 1: Processa os dados e retorna o ID ou -1
+	            VerifyBiometricMatchAN : VerifyBiometricMatchAN {
+	                using pins :
+	                    dbRes : DBResponseDT ;
+	                    originalReq : HTTPRequestDT ;
+	            }
+	
+	            // Ação 2: Recebe o ID e constrói a resposta HTTP
+	            BuildBiometricResponseAN : BuildBiometricResponseAN {
+	                using pins :
+	                    userId : Int ;
+	            }
+	
+	        // Fluxo de entrada e Query
+	        delegate p0 to req
+	        delegate p0 to originalReq // Para a verificação
+	        delegate p2 to BuildIdentifyBiometricQueryAN
+	        delegate p3 to dbRes
+	    }
+	}
+	
+	action def ValidateRecognitionInputAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateRecognitionDataEQ
+	    delegate req to req
+	}
+	
+	action def BuildIdentifyBiometricQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildIdentifyBiometricQueryEQ
+	    delegate req to req
+	    delegate BuildIdentifyBiometricQueryAN to qry
+	}
+	
+	action def VerifyBiometricMatchAN ( dbRes : DBResponseDT, originalReq : HTTPRequestDT ) : Int {
+	    constraint :
+	        post-condition VerifyBiometricMatchEQ
+	    delegate dbRes to dbRes
+	    delegate originalReq to originalReq
+	    delegate VerifyBiometricMatchAN to userIdFound
+	}
+	
+	action def BuildBiometricResponseAN ( userId : Int ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildBiometricResponseEQ
+	    delegate userId to userId
+	    delegate BuildBiometricResponseAN to res
+	}
+	
+	constraint ValidateRecognitionDataEQ ( req : HTTPRequestDT ) { }
+	constraint BuildIdentifyBiometricQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint VerifyBiometricMatchEQ ( dbRes : DBResponseDT, originalReq : HTTPRequestDT ) : ( userIdFound : Int ) { }
+	constraint BuildBiometricResponseEQ ( userId : Int ) : ( res : HTTPResponseDT ) { }
+	
+	activity def UpdateOrderAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateUpdateOrderAN : ValidateUpdateOrderAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdateOrderQueryAN : BuildUpdateOrderQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildUpdateOrderResponseAN : BuildUpdateOrderResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildUpdateOrderQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildUpdateOrderResponseAN
+	    }
+	}
+	
+	action def ValidateUpdateOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateUpdateOrderRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildUpdateOrderQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildUpdateOrderQueryEQ
+	    delegate req to req
+	    delegate BuildUpdateOrderQueryAN to qry
+	}
+	
+	action def BuildUpdateOrderResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildUpdateOrderResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildUpdateOrderResponseAN to res
+	}
+	
+	constraint ValidateUpdateOrderRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildUpdateOrderQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildUpdateOrderResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def CheckDebtsAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateCheckDebtsRequestAN : ValidateCheckDebtsRequestAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCheckDebtsQueryAN : BuildCheckDebtsQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCheckDebtsResponseAN : BuildCheckDebtsResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildCheckDebtsQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildCheckDebtsResponseAN
+	    }
+	}
+	
+	action def ValidateCheckDebtsRequestAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateCheckDebtsRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildCheckDebtsQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildCheckDebtsQueryEQ
+	    delegate req to req
+	    delegate BuildCheckDebtsQueryAN to qry
+	}
+	
+	action def BuildCheckDebtsResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildCheckDebtsResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildCheckDebtsResponseAN to res
+	}
+	
+	constraint ValidateCheckDebtsRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildCheckDebtsQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildCheckDebtsResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def RetrieveOrderAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	    body {
+	        actions :
+	            ValidateRetrieveOrderAN : ValidateRetrieveOrderAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRetrieveOrderQueryAN : BuildRetrieveOrderQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildRetrieveOrderResponseAN : BuildRetrieveOrderResponseAN {
+	                using pins :
+	                    res : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p2 to BuildRetrieveOrderQueryAN
+	        delegate p3 to res
+	        delegate p1 to BuildRetrieveOrderResponseAN
+	    }
+	}
+	
+	action def ValidateRetrieveOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateRetrieveOrderRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildRetrieveOrderQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildRetrieveOrderQueryEQ
+	    delegate req to req
+	    delegate BuildRetrieveOrderQueryAN to qry
+	}
+	
+	action def BuildRetrieveOrderResponseAN ( dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildRetrieveOrderResponseEQ
+	    delegate dbRes to dbRes
+	    delegate BuildRetrieveOrderResponseAN to res
+	}
+	
+	constraint ValidateRetrieveOrderRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildRetrieveOrderQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildRetrieveOrderResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def CreateOrderAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) ( p5 : HTTPResponseDT ) : ( p1 : HTTPResponseDT, p2 : DBQueryDT, p4 : HTTPRequestDT ) {
+	    body {
+	        actions :
+	            ValidateCreateOrderAN : ValidateCreateOrderAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildCreateOrderQueryAN : BuildCreateOrderQueryAN {
+	                using pins :
+	                    req : HTTPRequestDT ;
+	            }
+	
+	            BuildProcessingRequestAN : BuildProcessingRequestAN {
+	                using pins :
+	                    dbRes : DBResponseDT ;
+	                    originalReq : HTTPRequestDT ;
+	            }
+	
+	            BuildFinalOrderResponseAN : BuildFinalOrderResponseAN {
+	                using pins :
+	                    procRes : HTTPResponseDT ;
+	                    dbRes : DBResponseDT ;
+	            }
+	
+	        delegate p0 to req
+	        delegate p0 to originalReq
+	        delegate p3 to dbRes
+	        delegate p5 to procRes
+	        delegate p2 to BuildCreateOrderQueryAN
+	        delegate p4 to BuildProcessingRequestAN
+	        delegate p1 to BuildFinalOrderResponseAN
+	    }
+	}
+	
+	action def ValidateCreateOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        pre-condition ValidateCreateOrderRequestEQ
+	    delegate req to req
+	}
+	
+	action def BuildCreateOrderQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildCreateOrderQueryEQ
+	    delegate req to req
+	    delegate BuildCreateOrderQueryAN to qry
+	}
+	
+	action def BuildProcessingRequestAN ( dbRes : DBResponseDT, originalReq : HTTPRequestDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildProcessingRequestEQ
+	    delegate dbRes to dbRes
+	    delegate originalReq to originalReq
+	    delegate BuildProcessingRequestAN to procReq
+	}
+	
+	action def BuildFinalOrderResponseAN ( procRes : HTTPResponseDT, dbRes : DBResponseDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition BuildFinalOrderResponseEQ
+	    delegate procRes to procRes
+	    delegate dbRes to dbRes
+	    delegate BuildFinalOrderResponseAN to res
+	}
+	
+	constraint ValidateCreateOrderRequestEQ ( req : HTTPRequestDT ) { }
+	constraint BuildCreateOrderQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
+	constraint BuildProcessingRequestEQ ( dbRes : DBResponseDT, originalReq : HTTPRequestDT ) : ( procReq : HTTPRequestDT ) { }
+	constraint BuildFinalOrderResponseEQ ( procRes : HTTPResponseDT, dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
+	
+	activity def CheckItemsAvailabilityAC ( order : OrderDT ) ( stockRes : HTTPResponseDT ) : ( available : Boolean, stockReq : HTTPRequestDT ) {
+	    body {
+	        actions :
+	            BuildStockCheckQueryAN : BuildStockCheckQueryAN {
+	                using pins :
+	                    order : OrderDT ;
+	            }
+	
+	            VerifyStockAvailabilityAN : VerifyStockAvailabilityAN {
+	                using pins :
+	                    stockRes : HTTPResponseDT ;
+	                    originalOrder : OrderDT ;
+	            }
+	
+	        delegate order to order
+	        delegate order to originalOrder
+	        delegate stockRes to stockRes
+	    }
+	}
+	
+	action def BuildStockCheckQueryAN ( order : OrderDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildStockCheckQueryEQ
+	    delegate order to order
+	    delegate BuildStockCheckQueryAN to req
+	}
+	
+	action def VerifyStockAvailabilityAN ( stockRes : HTTPResponseDT, originalOrder : OrderDT ) : Boolean {
+	    constraint :
+	        post-condition VerifyStockAvailabilityEQ
+	    delegate stockRes to stockRes
+	    delegate originalOrder to originalOrder
+	    delegate VerifyStockAvailabilityAN to available
+	}
+	
+	constraint BuildStockCheckQueryEQ ( order : OrderDT ) : ( req : HTTPRequestDT ) { }
+	constraint VerifyStockAvailabilityEQ ( stockRes : HTTPResponseDT, originalOrder : OrderDT ) : ( available : Boolean ) { }
+	
+	activity def PaymentProcessingAC ( chargeReq : OrderChargeDT ) ( dbRes : DBResponseDT ) : ( status : PaymentStatusEnum, qry : DBQueryDT ) {
+	    body {
+	        actions :
+	            BuildGetPaymentMethodQueryAN : BuildGetPaymentMethodQueryAN {
+	                using pins :
+	                    chargeReq : OrderChargeDT ;
+	            }
+	
+	            ExecutePaymentTransactionAN : ExecutePaymentTransactionAN {
+	                using pins :
+	                    dbRes : DBResponseDT ;
+	                    chargeReq : OrderChargeDT ;
+	            }
+	
+	            BuildPaymentStatusAN : BuildPaymentStatusAN {
+	                using pins :
+	                    rawResult : Boolean ;
+	            }
+	
+	        delegate chargeReq to chargeReq
+	        delegate dbRes to dbRes
+	    }
+	}
+	
+	action def BuildGetPaymentMethodQueryAN ( chargeReq : OrderChargeDT ) : DBQueryDT {
+	    constraint :
+	        post-condition BuildGetPaymentMethodQueryEQ
+	    delegate chargeReq to chargeReq
+	    delegate BuildGetPaymentMethodQueryAN to qry
+	}
+	
+	action def ExecutePaymentTransactionAN ( dbRes : DBResponseDT, chargeReq : OrderChargeDT ) : Boolean {
+	    constraint :
+	        post-condition ExecutePaymentTransactionEQ
+	    delegate dbRes to dbRes
+	    delegate chargeReq to chargeReq
+	    delegate ExecutePaymentTransactionAN to success
+	}
+	
+	action def BuildPaymentStatusAN ( rawResult : Boolean ) : PaymentStatusEnum {
+	    constraint :
+	        post-condition BuildPaymentStatusEQ
+	    delegate rawResult to rawResult
+	    delegate BuildPaymentStatusAN to status
+	}
+	
+	constraint BuildGetPaymentMethodQueryEQ ( chargeReq : OrderChargeDT ) : ( qry : DBQueryDT ) { }
+	constraint ExecutePaymentTransactionEQ ( dbRes : DBResponseDT, chargeReq : OrderChargeDT ) : ( success : Boolean ) { }
+	constraint BuildPaymentStatusEQ ( rawResult : Boolean ) : ( status : PaymentStatusEnum ) { }
+	
+	activity def PriceCalculationAC ( items : OrderItemArrayDT ) : ( totalPrice : Real ) {
+	    body {
+	        actions :
+	            CalculateTotalAN : CalculateTotalAN {
+	                using pins :
+	                    items : OrderItemArrayDT ;
+	            }
+	
+	        delegate items to items
+	    }
+	}
+	
+	action def CalculateTotalAN ( items : OrderItemArrayDT ) : Real {
+	    constraint :
+	        post-condition CalculateTotalEQ
+	    delegate items to items
+	    delegate CalculateTotalAN to total
+	}
+	
+	constraint CalculateTotalEQ ( items : OrderItemArrayDT ) : ( total : Real ) { }
+	
+	activity def AdditionalProcessingCoordinatorAC (
+	    order : OrderDT ) (
+	    calculatedPrice : Real ) (
+	    routedKitchenId : Int
+	) : (
+	    processingResult : OrderProcessingDT,
+	    itemsForPricing : OrderItemArrayDT,
+	    itemsForRouting : OrderItemArrayDT
+	) {
+	    body {
+	        actions :
+	            DistributeItemsAN : DistributeItemsAN {
+	                using pins :
+	                    order : OrderDT ;
+	            }
+	
+	            BuildProcessingResultAN : BuildProcessingResultAN {
+	                using pins :
+	                    price : Real ;
+	                    kitchenId : Int ;
+	            }
+	
+	        delegate order to order
+	        delegate calculatedPrice to price
+	        delegate routedKitchenId to kitchenId
+	        
+	    }
+	}
+	
+	action def DistributeItemsAN ( order : OrderDT ) : ( itemsP : OrderItemArrayDT, itemsR : OrderItemArrayDT ) {
+	    constraint :
+	        post-condition DistributeItemsEQ
+	    delegate order to order
+	    delegate DistributeItemsAN to itemsP
+	    delegate DistributeItemsAN to itemsR
+	}
+	
+	action def BuildProcessingResultAN ( price : Real, kitchenId : Int ) : OrderProcessingDT {
+	    constraint :
+	        post-condition BuildProcessingResultEQ
+	    delegate price to price
+	    delegate kitchenId to kitchenId
+	    delegate BuildProcessingResultAN to result
+	}
+	
+	constraint DistributeItemsEQ ( order : OrderDT ) : ( itemsP : OrderItemArrayDT, itemsR : OrderItemArrayDT ) { }
+	constraint BuildProcessingResultEQ ( price : Real, kitchenId : Int ) : ( result : OrderProcessingDT ) { }
+	
+	activity def OrderProcessingCoordinatorAC (
+	    order : OrderDT ) (
+	    debtsRes : HTTPResponseDT ) (
+	    availResult : Boolean ) (
+	    procResult : OrderProcessingDT ) (
+	    payResult : PaymentStatusEnum
+	) : (
+	    debtsReq : HTTPRequestDT,
+	    itemsForCheck : OrderItemArrayDT,
+	    orderForProc : OrderDT,
+	    chargeReq : OrderChargeDT,
+	    finalResponse : HTTPResponseDT
+	) {
+	    body {
+	        actions :
+	            BuildCheckDebtsRequestAN : BuildCheckDebtsRequestAN {
+	                using pins :
+	                    order : OrderDT ;
+	            }
+	
+	            ExtractItemsForAvailabilityAN : ExtractItemsForAvailabilityAN {
+	                using pins :
+	                    order : OrderDT ;
+	            }
+	
+	            ForwardOrderToProcessingAN : ForwardOrderToProcessingAN {
+	                using pins :
+	                    order : OrderDT ;
+	            }
+	
+	            PreparePaymentChargeAN : PreparePaymentChargeAN {
+	                using pins :
+	                    order : OrderDT ;
+	                    procResult : OrderProcessingDT ;
+	            }
+	
+	            EvaluateProcessingResultAN : EvaluateProcessingResultAN {
+	                using pins :
+	                    debtsRes : HTTPResponseDT ;
+	                    availResult : Boolean ;
+	                    payResult : PaymentStatusEnum ;
+	            }
+	
+	        delegate order to order
+	        delegate debtsRes to debtsRes
+	        delegate availResult to availResult
+	        delegate procResult to procResult
+	        delegate payResult to payResult
+	    }
+	}
+	
+	action def BuildCheckDebtsRequestAN ( order : OrderDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildCheckDebtsRequestEQ
+	    delegate order to order
+	    delegate BuildCheckDebtsRequestAN to req
+	}
+	
+	action def ExtractItemsForAvailabilityAN ( order : OrderDT ) : OrderItemArrayDT {
+	    constraint :
+	        post-condition ExtractItemsForAvailabilityEQ
+	    delegate order to order
+	    delegate ExtractItemsForAvailabilityAN to items
+	}
+	
+	action def ForwardOrderToProcessingAN ( order : OrderDT ) : OrderDT {
+	    constraint :
+	        post-condition ForwardOrderToProcessingEQ
+	    delegate order to order
+	    delegate ForwardOrderToProcessingAN to orderOut
+	}
+	
+	action def PreparePaymentChargeAN ( order : OrderDT, procResult : OrderProcessingDT ) : OrderChargeDT {
+	    constraint :
+	        post-condition PreparePaymentChargeEQ
+	    delegate order to order
+	    delegate procResult to procResult
+	    delegate PreparePaymentChargeAN to charge
+	}
+	
+	action def EvaluateProcessingResultAN (
+	    debtsRes : HTTPResponseDT,
+	    availResult : Boolean,
+	    payResult : PaymentStatusEnum
+	) : HTTPResponseDT {
+	    constraint :
+	        post-condition EvaluateProcessingResultEQ
+	    delegate debtsRes to debtsRes
+	    delegate availResult to availResult
+	    delegate payResult to payResult
+	    delegate EvaluateProcessingResultAN to res
+	}
+	
+	constraint BuildCheckDebtsRequestEQ ( order : OrderDT ) : ( req : HTTPRequestDT ) { }
+	constraint ExtractItemsForAvailabilityEQ ( order : OrderDT ) : ( items : OrderItemArrayDT ) { }
+	constraint ForwardOrderToProcessingEQ ( order : OrderDT ) : ( orderOut : OrderDT ) { }
+	constraint PreparePaymentChargeEQ ( order : OrderDT, procResult : OrderProcessingDT ) : ( charge : OrderChargeDT ) { }
+	constraint EvaluateProcessingResultEQ (
+	    debtsRes : HTTPResponseDT,
+	    availResult : Boolean,
+	    payResult : PaymentStatusEnum
+	) : (
+	    res : HTTPResponseDT
+	) { }
+	
+	activity def BiometricControllerAC ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) {
+	    body {
+	        actions :
+	            RouteSensorActivationAN : RouteSensorActivationAN {
+	                using pins :
+	                    reqType : BiometricTypeEnum ;
+	            }
+	
+	        delegate reqType to reqType
+	    }
+	}
+	
+	action def RouteSensorActivationAN ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) {
+	    constraint :
+	        post-condition RouteSensorActivationEQ
+	    delegate reqType to reqType
+	    delegate RouteSensorActivationAN to activateFP
+	    delegate RouteSensorActivationAN to activateCam
+	}
+	
+	constraint RouteSensorActivationEQ ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) { }
+	
+	activity def BiometricTotemProcessorAC (
+	    cpf : String ) (
+	    userRes : HTTPResponseDT ) (
+	    selectedType : BiometricTypeEnum ) (
+	    sensorRes : HTTPResponseDT ) (
+	    regRes : HTTPResponseDT
+	) : (
+	    userReq : HTTPRequestDT,
+	    enableSel : Boolean,
+	    sensorReq : HTTPRequestDT,
+	    regReq : HTTPRequestDT
+	) {
+	    body {
+	        actions :
+	            BuildUserCheckRequestAN : BuildUserCheckRequestAN {
+	                using pins :
+	                    cpf : String ;
+	            }
+	
+	            EvaluateUserAndEnableSelAN : EvaluateUserAndEnableSelAN {
+	                using pins :
+	                    userRes : HTTPResponseDT ;
+	            }
+	
+	            BuildSensorCaptureRequestAN : BuildSensorCaptureRequestAN {
+	                using pins :
+	                    selectedType : BiometricTypeEnum ;
+	            }
+	
+	            BuildRegisterRequestAN : BuildRegisterRequestAN {
+	                using pins :
+	                    sensorRes : HTTPResponseDT ;
+	                    cpf : String ;
+	            }
+	
+	        delegate cpf to cpf
+	        delegate userRes to userRes
+	        delegate selectedType to selectedType
+	        delegate sensorRes to sensorRes
+	    }
+	}
+	
+	action def BuildUserCheckRequestAN ( cpf : String ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildUserCheckRequestEQ
+	    delegate cpf to cpf
+	    delegate BuildUserCheckRequestAN to req
+	}
+	
+	action def EvaluateUserAndEnableSelAN ( userRes : HTTPResponseDT ) : Boolean {
+	    constraint :
+	        post-condition EvaluateUserAndEnableSelEQ
+	    delegate userRes to userRes
+	    delegate EvaluateUserAndEnableSelAN to enable
+	}
+	
+	action def BuildSensorCaptureRequestAN ( selectedType : BiometricTypeEnum ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildSensorCaptureRequestEQ
+	    delegate selectedType to selectedType
+	    delegate BuildSensorCaptureRequestAN to req
+	}
+	
+	action def BuildRegisterRequestAN ( sensorRes : HTTPResponseDT, cpf : String ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildRegisterRequestEQ
+	    delegate sensorRes to sensorRes
+	    delegate cpf to cpf
+	    delegate BuildRegisterRequestAN to req
+	}
+	
+	constraint BuildUserCheckRequestEQ ( cpf : String ) : ( req : HTTPRequestDT ) { }
+	constraint EvaluateUserAndEnableSelEQ ( userRes : HTTPResponseDT ) : ( enable : Boolean ) { }
+	constraint BuildSensorCaptureRequestEQ ( selectedType : BiometricTypeEnum ) : ( req : HTTPRequestDT ) { }
+	constraint BuildRegisterRequestEQ ( sensorRes : HTTPResponseDT, cpf : String ) : ( req : HTTPRequestDT ) { }
+	
+	activity def CompartmentActuatorAC ( cmd : CompartmentCMDEnum ) : ( orderAvailable : PickupOrderAddedDT, pickupDetected : Boolean ) {
+	    body {
+	        actions :
+	            ExecuteCompartmentCommandAN : ExecuteCompartmentCommandAN {
+	                using pins :
+	                    cmd : CompartmentCMDEnum ;
+	            }
+	
+	            // Esta ação atua como fonte (Source), sem pinos de entrada
+	            RegisterOrderPlacementAN : RegisterOrderPlacementAN {
+	                using pins :
+	                    orderInfo : PickupOrderAddedDT ;
+	            }
+	
+	            // Esta ação atua como fonte (Source), sem pinos de entrada
+	            DetectOrderPickupAN : DetectOrderPickupAN {
+	                using pins :
+	                    isPickedUp : Boolean ;
+	            }
+	
+	        delegate cmd to cmd
+	        delegate RegisterOrderPlacementAN to orderAvailable
+	        delegate DetectOrderPickupAN to pickupDetected
+	    }
+	}
+	
+	action def ExecuteCompartmentCommandAN ( cmd : CompartmentCMDEnum ) : Void {
+	    constraint :
+	        post-condition ExecuteCompartmentCommandEQ
+	    delegate cmd to cmd
+	}
+	
+	// Ação corrigida: Sem parâmetros de entrada (parenteses vazios)
+	action def RegisterOrderPlacementAN ( ) : PickupOrderAddedDT {
+	    constraint :
+	        post-condition RegisterOrderPlacementEQ
+	    delegate RegisterOrderPlacementAN to orderInfo
+	}
+	
+	action def DetectOrderPickupAN ( ) : Boolean {
+	    constraint :
+	        post-condition DetectOrderPickupEQ
+	    delegate DetectOrderPickupAN to isPickedUp
+	}
+	
+	constraint ExecuteCompartmentCommandEQ ( cmd : CompartmentCMDEnum ) { }
+	constraint RegisterOrderPlacementEQ ( ) : ( orderInfo : PickupOrderAddedDT ) { }
+	constraint DetectOrderPickupEQ ( ) : ( isPickedUp : Boolean ) { }
+
+	boundary component def SelectBiometricTypeCP { 
+		ports : 
+			biometricType : BiometricTypeOPT ; 
+			enableSelection_BiometricType : BooleanIPT ;
+	} 
 } 
 
 package FoodFastPorts { 
@@ -1858,27 +3030,27 @@ Requirement ManageUsersFR ( 1 ) {
 	
 	Requirement UpdateUserFR ( 1.2 ) { 
 		text = "“O sistema deve permitir que o usuário atualize a conta no sistema com todos os dados necessários.”" 
-		satisfied by FoodFastComponents.UserUpdateCP ; 
-		
 		Requirement RegisterPaymentMethodsFR_ForUpdate ( 1.2.2 ) { 
 			text = "“O sistema deve permitir que o usuário atualize seus métodos de pagamento.”" 
+			satisfied by FoodFastComponents.CreatePaymentMethodsCP ; 
 		} 
 		
 		Requirement RegisterPersonalInfoFR_ForUpdate ( 1.2.1 ) { 
 			text = "“O sistema deve permitir que o usuário atualize suas informações pessoais.”"
+			satisfied by FoodFastComponents.CreatePersonalInfoCP ; 
 		}
 	}
 	
 	Requirement RegisterUserFR ( 1.1 ) { 
 		text = "“O sistema deve permitir que o usuário realize o cadastro no sistema com todos os dados necessários.”" 
-		satisfied by FoodFastComponents.UserCreateCP ; 
-		
 		Requirement RegisterPersonalInfoFR_ForRegister ( 1.1.1 ) { 
 			text = "“O sistema deve permitir que o usuário cadastre suas informações pessoais.”" 
+			satisfied by FoodFastComponents.UpdatePersonalInfoCP ; 
 		} 
 		
 		Requirement RegisterPaymentMethodsFR_ForRegister ( 1.1.2 ) { 
 			text = "“O sistema deve permitir que o usuário cadastre seus métodos de pagamento.”" 
+			satisfied by FoodFastComponents.UpdatePaymentMethodsCP ; 
 		}
 	}
 	
