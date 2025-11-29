@@ -821,7 +821,7 @@ package FoodFastComponents {
 			components : 
 				 
 				
-				KeywordCP : KeywordCP { 
+				KeywordCP : KeyboardCP { 
 					using ports : keywordOutput : StringOPT ;
 				} 
 				
@@ -921,7 +921,7 @@ package FoodFastComponents {
 			httpClient_BiometricTotemProcessor_internal : HTTPClientP ; cpfString_BiometricTotem : StringIPT ;
 	enableSelecion_Totem : BooleanOPT ; selectedBiometricType : BiometricTypeIPT ; } 
 	
-	boundary component def KeywordCP { 
+	boundary component def KeyboardCP { 
 		ports : keywordOutput : StringOPT ;
 	}
 	
@@ -1410,6 +1410,8 @@ package FoodFastComponents {
 						pickupDetectedController : BooleanIPT ; 
 						httpClient_PickupSensors : HTTPClientP ; 
 						httpClient_PickupControllerToOrderServer : HTTPClientP ;
+						selectBiometric_Pickup : BooleanOPT ;
+						selectedBiometricType_Pickup : BiometricTypeIPT ;
 				} 
 				
 				BiometricSensorsCP : BiometricSensorsCP { 
@@ -1434,9 +1436,13 @@ package FoodFastComponents {
 						compartmentCMD : CompartmentCMDIPT ; 
 						orderAvailable : PickupOrderAddedOPT ; 
 						pickupDetectedActuator : BooleanOPT ;
+						orderId_CompartmentActuator : StringIPT ;
 				} 
 			
-			connectors : 
+				KeywordCP : KeyboardCP { 
+					using ports : keywordOutput : StringOPT ;
+				} 
+			SelectBiometricTypeCP : SelectBiometricTypeCP { using ports : biometricType : BiometricTypeOPT ; enableSelection_BiometricType : BooleanIPT ; } connectors : 
 				sensorsData : SensorCN bindings httpClient_PickupSensors = sensors_Component ; 
 				readyOrdersCN : OrderItemArrayCN bindings readyOrders = orderReadyList ; 
 				barcodeData : BiometricRawCN bindings biometricRaw_Barcode = biometricRawIPT_Barcode ; 
@@ -1446,9 +1452,9 @@ package FoodFastComponents {
 				pickupDetected : BooleanCN bindings pickupDetectedActuator = pickupDetectedController ; 
 				compartment : IntCN bindings compartmentToMove = compartmentID ; 
 				moved : BooleanCN bindings arrivedAtCompartment = compartmentArrived ; 
+				orderId_Input : StringCN bindings keywordOutput = orderId_CompartmentActuator ; 
 			
-			delegations : 
-				httpClient_PickupControllerToOrderServer to httpClient_PickupToOrderServer
+			enableSelection : BooleanCN bindings selectBiometric_Pickup = enableSelection_BiometricType ; biometricSelected : BiometricTypeCN bindings biometricType = selectedBiometricType_Pickup ; delegations : httpClient_PickupControllerToOrderServer to httpClient_PickupToOrderServer
 				httpClient_PickupControllerToBiometricServer to httpClient_PickupToBiometricServer
 		}
 	}
@@ -1466,18 +1472,27 @@ package FoodFastComponents {
 			pickupDetectedController : BooleanIPT ; 
 			httpClient_PickupSensors : HTTPClientP ; 
 			httpClient_PickupControllerToOrderServer : HTTPClientP ;
-	} boundary
-	component def PickupConveyorCP { 
+			selectBiometric_Pickup : BooleanOPT ; 
+			selectedBiometricType_Pickup : BiometricTypeIPT ; 
+	}
+	
+	boundary component def PickupConveyorCP { 
 		ports : 
 			compartmentID : IntIPT ; 
 			arrivedAtCompartment : BooleanOPT ;
 	}
 	
+	boundary component def SelectBiometricTypeCP { 
+		ports : 
+			biometricType : BiometricTypeOPT ; 
+			enableSelection_BiometricType : BooleanIPT ;
+	} 
+	
 	component def CompartmentActuatorCP {
 		ports : 
 			compartmentCMD : CompartmentCMDIPT ;
 			orderAvailable : PickupOrderAddedOPT ; 
-			pickupDetectedActuator : BooleanOPT ; 
+			pickupDetectedActuator : BooleanOPT ; orderId_CompartmentActuator : StringIPT ; 
 		
 		configuration { 
 			components : 
@@ -2564,9 +2579,14 @@ package FoodFastComponents {
 	) {
 	    body {
 	        actions :
-	            DistributeItemsAN : DistributeItemsAN {
+	            DistributeItemsToPricingAN : DistributeItemsToPricingAN {
 	                using pins :
-	                    order : OrderDT ;
+	                    orderPricing : OrderDT ;
+	            }
+	            
+	            DistributeItemsToRoutingAN : DistributeItemsToRoutingAN {
+	                using pins :
+	                    orderRouting : OrderDT ;
 	            }
 	
 	            BuildProcessingResultAN : BuildProcessingResultAN {
@@ -2575,20 +2595,26 @@ package FoodFastComponents {
 	                    kitchenId : Int ;
 	            }
 	
-	        delegate order to order
+	        delegate order to orderPricing
+	        delegate order to orderRouting
 	        delegate calculatedPrice to price
 	        delegate routedKitchenId to kitchenId
 	        
-	    }
+	    delegate processingResult to BuildProcessingResultAN delegate itemsForRouting to DistributeItemsToRoutingAN delegate itemsForPricing to DistributeItemsToPricingAN }
 	}
 	
-	action def DistributeItemsAN ( order : OrderDT ) : ( itemsP : OrderItemArrayDT, itemsR : OrderItemArrayDT ) {
+	action def DistributeItemsToPricingAN ( order : OrderDT ) : OrderItemArrayDT {
+	    constraint :
+	        post-condition DistributeItemsEQ
+	    	delegate order to order
+			delegate DistributeItemsToPricingAN to items 
+		}
+	
+	action def DistributeItemsToRoutingAN ( order : OrderDT ) : OrderItemArrayDT {
 	    constraint :
 	        post-condition DistributeItemsEQ
 	    delegate order to order
-	    delegate DistributeItemsAN to itemsP
-	    delegate DistributeItemsAN to itemsR
-	}
+	delegate DistributeItemsToRoutingAN to items }
 	
 	action def BuildProcessingResultAN ( price : Real, kitchenId : Int ) : OrderProcessingDT {
 	    constraint :
@@ -2598,7 +2624,7 @@ package FoodFastComponents {
 	    delegate BuildProcessingResultAN to result
 	}
 	
-	constraint DistributeItemsEQ ( order : OrderDT ) : ( itemsP : OrderItemArrayDT, itemsR : OrderItemArrayDT ) { }
+	constraint DistributeItemsEQ ( order : OrderDT ) : ( items : OrderItemArrayDT) { }
 	constraint BuildProcessingResultEQ ( price : Real, kitchenId : Int ) : ( result : OrderProcessingDT ) { }
 	
 	activity def OrderProcessingCoordinatorAC (
@@ -2709,24 +2735,23 @@ package FoodFastComponents {
 	activity def BiometricControllerAC ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) {
 	    body {
 	        actions :
-	            RouteSensorActivationAN : RouteSensorActivationAN {
+	            RouteSensorActivationAN : RouteFingerprintActivationAN {
 	                using pins :
-	                    reqType : BiometricTypeEnum ;
-	            }
+	                    reqTypeFinger : BiometricTypeEnum ;
+	            } RouteCameraActivationAN : RouteCameraActivationAN { using pins : reqTypeCam : BiometricTypeEnum ; }
 	
-	        delegate reqType to reqType
-	    }
+	        delegate reqType to reqTypeFinger
+	    delegate reqType to reqTypeCam delegate activateFP to RouteSensorActivationAN delegate activateCam to RouteCameraActivationAN }
 	}
 	
-	action def RouteSensorActivationAN ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) {
+	action def RouteFingerprintActivationAN ( reqType : BiometricTypeEnum ) : Boolean {
 	    constraint :
-	        post-condition RouteSensorActivationEQ
+	        post-condition RouteFingerprintActivationEQ
 	    delegate reqType to reqType
-	    delegate RouteSensorActivationAN to activateFP
-	    delegate RouteSensorActivationAN to activateCam
+	    delegate RouteFingerprintActivationAN to activateFP
 	}
 	
-	constraint RouteSensorActivationEQ ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean, activateCam : Boolean ) { }
+	constraint RouteFingerprintActivationEQ ( reqType : BiometricTypeEnum ) : ( activateFP : Boolean ) { }
 	
 	activity def BiometricTotemProcessorAC (
 	    cpf : String ) (
@@ -2804,7 +2829,7 @@ package FoodFastComponents {
 	constraint BuildSensorCaptureRequestEQ ( selectedType : BiometricTypeEnum ) : ( req : HTTPRequestDT ) { }
 	constraint BuildRegisterRequestEQ ( sensorRes : HTTPResponseDT, cpf : String ) : ( req : HTTPRequestDT ) { }
 	
-	activity def CompartmentActuatorAC ( cmd : CompartmentCMDEnum ) : ( orderAvailable : PickupOrderAddedDT, pickupDetected : Boolean ) {
+	activity def CompartmentActuatorAC ( cmd : CompartmentCMDEnum ) ( orderIdInput : String ) : ( orderAvailable : PickupOrderAddedDT ) {
 	    body {
 	        actions :
 	            ExecuteCompartmentCommandAN : ExecuteCompartmentCommandAN {
@@ -2812,21 +2837,17 @@ package FoodFastComponents {
 	                    cmd : CompartmentCMDEnum ;
 	            }
 	
-	            // Esta ação atua como fonte (Source), sem pinos de entrada
 	            RegisterOrderPlacementAN : RegisterOrderPlacementAN {
 	                using pins :
-	                    orderInfo : PickupOrderAddedDT ;
-	            }
-	
-	            // Esta ação atua como fonte (Source), sem pinos de entrada
-	            DetectOrderPickupAN : DetectOrderPickupAN {
-	                using pins :
-	                    isPickedUp : Boolean ;
+	                    orderIdInput : String ;
+	                    compartmentId : Int ;
 	            }
 	
 	        delegate cmd to cmd
-	        delegate RegisterOrderPlacementAN to orderAvailable
-	        delegate DetectOrderPickupAN to pickupDetected
+	        delegate orderIdInput to orderIdInput
+	    	delegate orderAvailable to RegisterOrderPlacementAN 
+	    	flow from id to compartmentId 
+	    	datastore id : Int 
 	    }
 	}
 	
@@ -2836,28 +2857,252 @@ package FoodFastComponents {
 	    delegate cmd to cmd
 	}
 	
-	// Ação corrigida: Sem parâmetros de entrada (parenteses vazios)
-	action def RegisterOrderPlacementAN ( ) : PickupOrderAddedDT {
+	action def RegisterOrderPlacementAN ( orderIdInput : String, compartmentId : Int ) : PickupOrderAddedDT {
 	    constraint :
 	        post-condition RegisterOrderPlacementEQ
+	    delegate orderIdInput to orderIdInput
+	    delegate compartmentId to compartmentId
 	    delegate RegisterOrderPlacementAN to orderInfo
 	}
 	
-	action def DetectOrderPickupAN ( ) : Boolean {
-	    constraint :
-	        post-condition DetectOrderPickupEQ
-	    delegate DetectOrderPickupAN to isPickedUp
+	constraint ExecuteCompartmentCommandEQ ( cmd : CompartmentCMDEnum ) { }
+	constraint RegisterOrderPlacementEQ ( orderIdInput : String, compartmentId : Int ) : ( orderInfo : PickupOrderAddedDT ) { }
+	
+	action def RouteCameraActivationAN ( reqType : BiometricTypeEnum ) : Boolean { 
+		constraint : 
+			post-condition RouteCameraActivationEQ 
+		delegate reqType to reqType 
+		delegate RouteCameraActivationAN to activateCam
+	} 
+	
+	constraint RouteCameraActivationEQ ( reqType : BiometricTypeEnum ) : ( activateCam : Boolean ) { } 
+	
+	activity def PickupFlowControllerAC (
+	    compartmentArrived : Boolean ) (
+	    biometricRawIPT_Barcode : BiometricRawDT ) (
+	    orderAvailableController : PickupOrderAddedDT ) (
+	    pickupDetectedController : Boolean ) (
+	    selectedBiometricType_Pickup : BiometricTypeEnum ) (
+	    sensorRes : HTTPResponseDT ) (
+	    bioServerRes : HTTPResponseDT ) (
+	    orderServerRes : HTTPResponseDT ) (
+	    readyOrdersRes : HTTPResponseDT
+	) : (
+	    compartmentToMove : Int,
+	    selectBiometric_Pickup : Boolean,
+	    sensorActive_Barcode : Boolean,
+	    compartmentCMDOpt : CompartmentCMDEnum,
+	    pickupSensorReq : HTTPRequestDT,
+	    identifyUserReq : HTTPRequestDT,
+	    findOrderReq : HTTPRequestDT,
+	    updateOrderReq : HTTPRequestDT,
+	    fetchOrdersReq : HTTPRequestDT,
+	    readyOrders : OrderItemArrayDT
+	) {
+	    body {
+	        actions :
+	            // Ação 1: Mantém seleção ativa
+	            EnableSelectionAN : EnableSelectionAN {
+	                using pins :
+	                    triggerEnable : Boolean ;
+	            }
+	
+	            // Ação 2: Ativa sensor Barcode se selecionado
+	            ActivateBarcodeAN : ActivateBarcodeAN {
+	                using pins :
+	                    selectedTypeBarcode : BiometricTypeEnum ;
+	            }
+	
+	            // Ação 3: Requisita sensor Biométrico (HTTP) se Face/Digital
+	            BuildSensorRequestAN : BuildSensorRequestAN {
+	                using pins :
+	                    selectedTypeSensor : BiometricTypeEnum ;
+	            }
+	
+	            // Ação 4: Identifica usuário no BioServer com dados do Sensor
+	            BuildIdentifyUserReqAN : BuildIdentifyUserReqAN {
+	                using pins :
+	                    userIdentifiedResponse : HTTPResponseDT ;
+	            }
+	
+	            // Ação 5: Busca pedido do usuário no local atual
+	            FindOrderByUserAN : FindOrderByUserAN {
+	                using pins :
+	                    bioServerRes : HTTPResponseDT ;
+	                    currentLocation : Int ;
+	            }
+	
+	            // Ação 6: Busca pedido pelo Barcode lido
+	            FindOrderByBarcodeAN : FindOrderByBarcodeAN {
+	                using pins :
+	                    barcodeData : BiometricRawDT ;
+	            }
+	
+	            // Ação 7: Move a esteira para o compartimento do pedido
+	            CalculateMovementAN : CalculateMovementAN {
+	                using pins :
+	                    orderServerRes : HTTPResponseDT ;
+	            }
+	
+	            // Ação 10 e 11: Controla porta (Abre ao chegar, Fecha ao retirar)
+	            ControlDoorAN : ControlDoorAN {
+	                using pins :
+	                    arrived : Boolean ;
+	                    pickupDetected : Boolean ;
+	                    orderServerResponse : HTTPResponseDT ;
+	            }
+	
+	            // Ação 8 (Parte A): Requisita lista de pedidos prontos
+	            BuildFetchOrdersReqAN : BuildFetchOrdersReqAN {
+	                using pins :
+	                    triggerFetchOrders : Boolean ;
+	            }
+	
+	            // Ação 8 (Parte B): Atualiza lista de pedidos prontos
+	            UpdateDisplayListAN : UpdateDisplayListAN {
+	                using pins :
+	                    readyOrdersRes : HTTPResponseDT ;
+	            }
+	
+	            // Ação 9: Atualiza status de novo pedido colocado (Staff)
+	            BuildOrderPlacedUpdateReqAN : BuildOrderPlacedUpdateReqAN {
+	                using pins :
+	                    newOrder : PickupOrderAddedDT ;
+	            }
+	
+	        // --- Ligações ---
+	
+	        // Ação 1
+	        flow from alwaysTrue to triggerEnable
+	
+	        // Ação 2 e 3 (Split da seleção)
+	        delegate selectedBiometricType_Pickup to selectedTypeBarcode
+	
+	        // Ação 4
+	        delegate sensorRes to userIdentifiedResponse
+	
+	        // Ação 5
+	        delegate bioServerRes to bioServerRes
+	        
+	
+	        // Ação 6
+	        delegate biometricRawIPT_Barcode to barcodeData
+	
+	        // Ação 7
+	        delegate orderServerRes to orderServerRes
+	
+	        // Ação 10 e 11
+	        delegate compartmentArrived to arrived
+	        delegate pickupDetectedController to pickupDetected
+	
+	        
+	        delegate readyOrdersRes to readyOrdersRes
+	
+	        // Ação 9
+	        delegate orderAvailableController to newOrder
+	
+	        // Datastores
+	        delegate readyOrders to UpdateDisplayListAN 
+	        delegate selectBiometric_Pickup to EnableSelectionAN 
+	        
+	        delegate updateOrderReq to BuildOrderPlacedUpdateReqAN flow from fetchTrigger to triggerFetchOrders delegate fetchOrdersReq to BuildFetchOrdersReqAN delegate sensorActive_Barcode to ActivateBarcodeAN delegate pickupSensorReq to BuildSensorRequestAN delegate selectedBiometricType_Pickup to selectedTypeSensor delegate identifyUserReq to BuildIdentifyUserReqAN flow from pickupId to currentLocation delegate findOrderReq to FindOrderByUserAN delegate findOrderReq to FindOrderByBarcodeAN delegate compartmentToMove to CalculateMovementAN delegate compartmentCMDOpt to ControlDoorAN delegate orderServerRes to orderServerResponse datastore alwaysTrue : Boolean
+	        
+	        datastore fetchTrigger : Boolean
+	    datastore pickupId : Int
+	    }
 	}
 	
-	constraint ExecuteCompartmentCommandEQ ( cmd : CompartmentCMDEnum ) { }
-	constraint RegisterOrderPlacementEQ ( ) : ( orderInfo : PickupOrderAddedDT ) { }
-	constraint DetectOrderPickupEQ ( ) : ( isPickedUp : Boolean ) { }
-
-	boundary component def SelectBiometricTypeCP { 
-		ports : 
-			biometricType : BiometricTypeOPT ; 
-			enableSelection_BiometricType : BooleanIPT ;
-	} 
+	action def EnableSelectionAN ( trigger : Boolean ) : Boolean {
+	    constraint :
+	        post-condition EnableSelectionEQ
+	    delegate trigger to trigger
+	    delegate EnableSelectionAN to enabled
+	}
+	
+	action def ActivateBarcodeAN ( selectedType : BiometricTypeEnum ) : Boolean {
+	    constraint :
+	        post-condition ActivateBarcodeEQ
+	    delegate selectedType to selectedType
+	    delegate ActivateBarcodeAN to isActive
+	}
+	
+	action def BuildSensorRequestAN ( selectedType : BiometricTypeEnum ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildSensorRequestEQ
+	    delegate selectedType to selectedType
+	    delegate BuildSensorRequestAN to req
+	}
+	
+	action def BuildIdentifyUserReqAN ( sensorRes : HTTPResponseDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildIdentifyUserReqEQ
+	    delegate sensorRes to sensorRes
+	    delegate BuildIdentifyUserReqAN to req
+	}
+	
+	action def FindOrderByUserAN ( bioServerRes : HTTPResponseDT, currentLocation : Int ) : HTTPRequestDT {
+	    constraint :
+	        post-condition FindOrderByUserEQ
+	    delegate bioServerRes to bioServerRes
+	    delegate currentLocation to currentLocation
+	    delegate FindOrderByUserAN to req
+	}
+	
+	action def FindOrderByBarcodeAN ( barcodeData : BiometricRawDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition FindOrderByBarcodeEQ
+	    delegate barcodeData to barcodeData
+	    delegate FindOrderByBarcodeAN to req
+	}
+	
+	action def CalculateMovementAN ( orderServerRes : HTTPResponseDT ) : Int {
+	    constraint :
+	        post-condition CalculateMovementEQ
+	    delegate orderServerRes to orderServerRes
+	    delegate CalculateMovementAN to moveCmd
+	}
+	
+	action def ControlDoorAN ( orderServerRes : HTTPResponseDT, arrived : Boolean, pickupDetected : Boolean ) : CompartmentCMDEnum {
+	    constraint :
+	        post-condition ControlDoorEQ
+	    delegate orderServerRes to orderServerRes
+	    delegate arrived to arrived
+	    delegate pickupDetected to pickupDetected
+	    delegate ControlDoorAN to cmd
+	}
+	
+	action def BuildFetchOrdersReqAN ( trigger : Boolean ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildFetchOrdersReqEQ
+	    delegate trigger to trigger
+	    delegate BuildFetchOrdersReqAN to req
+	}
+	
+	action def UpdateDisplayListAN ( readyOrdersRes : HTTPResponseDT ) : OrderItemArrayDT {
+	    constraint :
+	        post-condition UpdateDisplayListEQ
+	    delegate readyOrdersRes to readyOrdersRes
+	    delegate UpdateDisplayListAN to list
+	}
+	
+	action def BuildOrderPlacedUpdateReqAN ( newOrder : PickupOrderAddedDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildOrderPlacedUpdateReqEQ
+	    delegate newOrder to newOrder
+	    delegate BuildOrderPlacedUpdateReqAN to req
+	}
+	
+	constraint EnableSelectionEQ ( trigger : Boolean ) : ( enabled : Boolean ) { }
+	constraint ActivateBarcodeEQ ( selectedType : BiometricTypeEnum ) : ( isActive : Boolean ) { }
+	constraint BuildSensorRequestEQ ( selectedType : BiometricTypeEnum ) : ( req : HTTPRequestDT ) { }
+	constraint BuildIdentifyUserReqEQ ( sensorRes : HTTPResponseDT ) : ( req : HTTPRequestDT ) { }
+	constraint FindOrderByUserEQ ( bioServerRes : HTTPResponseDT, currentLocation : Int ) : ( req : HTTPRequestDT ) { }
+	constraint FindOrderByBarcodeEQ ( barcodeData : BiometricRawDT ) : ( req : HTTPRequestDT ) { }
+	constraint CalculateMovementEQ ( orderServerRes : HTTPResponseDT ) : ( moveCmd : Int ) { }
+	constraint ControlDoorEQ ( orderServerRes : HTTPResponseDT, arrived : Boolean, pickupDetected : Boolean ) : ( cmd : CompartmentCMDEnum ) { }
+	constraint BuildFetchOrdersReqEQ ( trigger : Boolean ) : ( req : HTTPRequestDT ) { }
+	constraint UpdateDisplayListEQ ( readyOrdersRes : HTTPResponseDT ) : ( list : OrderItemArrayDT ) { }
+	constraint BuildOrderPlacedUpdateReqEQ ( newOrder : PickupOrderAddedDT ) : ( req : HTTPRequestDT ) { }
 } 
 
 package FoodFastPorts { 
