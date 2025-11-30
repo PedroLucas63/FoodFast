@@ -486,6 +486,14 @@ package FoodFastConnectors {
 		flows : 
 			PickupOrderAddedDT from source to destination
 	}
+	
+	connector def ProductArrayCN { 
+		participants : 
+			~ destination : ProductArrayIPT ; 
+			~ source : ProductArrayOPT ; 
+		flows : 
+			ProductArrayDT from source to destination
+	}
 }
 
 package FoodFastComponents { 
@@ -1391,6 +1399,7 @@ package FoodFastComponents {
 						orderToPrint : OrderOPT ;
 						activeSelectionBiometric : BooleanOPT ;
 						biometricSelected : BiometricTypeIPT ;
+						products : ProductArrayOPT ;
 				} 
 				
 				BiometricSensorsCP : BiometricSensorsCP { 
@@ -1407,6 +1416,7 @@ package FoodFastComponents {
 					using ports : 
 						enabled : BooleanIPT ; 
 						orderProducts : OrderItemArrayOPT ;
+						productsAvailable : ProductArrayIPT ;
 				} 
 				
 				SelectBiometricTypeCP : SelectBiometricTypeCP { 
@@ -1422,6 +1432,7 @@ package FoodFastComponents {
 				orderProducts : OrderItemArrayCN bindings orderProducts = selectedProducts ;
 				enable : BooleanCN bindings activeSelectionBiometric = enableSelection_BiometricType ; 
 				selected : BiometricTypeCN bindings biometricType = biometricSelected ; 
+				products : ProductArrayCN bindings products = productsAvailable ; 
 			
 			delegations : 
 				httpClient_TotemControllerToProductServer to httpClient_TotemToProductServer 
@@ -1439,13 +1450,13 @@ package FoodFastComponents {
 			selectedProducts : OrderItemArrayIPT ; 
 			enableDisplay : BooleanOPT ; 
 			orderToPrint : OrderOPT ;
-	biometricSelected : BiometricTypeIPT ; activeSelectionBiometric : BooleanOPT ; } 
+	biometricSelected : BiometricTypeIPT ; activeSelectionBiometric : BooleanOPT ; products : ProductArrayOPT ; } 
 	
 	boundary component def MenuDisplayCP { 
 		ports : 
 			enabled : BooleanIPT ; 
 			orderProducts : OrderItemArrayOPT ;
-	} 
+	productsAvailable : ProductArrayIPT ; } 
 	
 	boundary component def ReceiptPrinterCP { 
 		ports : 
@@ -1675,7 +1686,7 @@ package FoodFastComponents {
 	constraint BuildDeleteProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
 	constraint BuildDeleteProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
-	activity def CreateProductCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+	activity def CreateProductAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
 		body { 
 			actions : 
 				BuildCreateProductQueryAN : BuildCreateProductQueryAN { 
@@ -1714,7 +1725,7 @@ package FoodFastComponents {
 	constraint BuildCreateProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
 	constraint BuildCreateProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
-	activity def UpdateProductCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+	activity def UpdateProductAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
 		body { 
 			actions : 
 				BuildUpdateProductQueryAN : BuildUpdateProductQueryAN { 
@@ -1754,7 +1765,7 @@ package FoodFastComponents {
 	constraint BuildUpdateProductQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
 	constraint BuildUpdateProductResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 
-	activity def GetMachineStockCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
+	activity def GetMachineStockAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) { 
 		body { 
 			actions : 
 				BuildGetMachineStockQueryAN : BuildGetMachineStockQueryAN { 
@@ -1791,7 +1802,7 @@ package FoodFastComponents {
 	constraint BuildGetMachineStockQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { } 
 	constraint BuildGetMachineStockResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
-	activity def CreatePersonalInfoCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	activity def CreatePersonalInfoAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
 	
 	    body {
 	        actions :
@@ -1802,7 +1813,7 @@ package FoodFastComponents {
 	
 	            BuildCreatePersonalInfoQueryAN : BuildCreatePersonalInfoQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildCreatePersonalInfoResponseAN : BuildCreatePersonalInfoResponseAN {
@@ -1814,7 +1825,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildCreatePersonalInfoQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildCreatePersonalInfoResponseAN
-	    }
+	    flow from ValidateCreatePersonalInfoAN to reqBuild }
 	}
 	
 	action def ValidateCreatePersonalInfoAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -1822,7 +1833,7 @@ package FoodFastComponents {
 	        pre-condition ValidateAgeEQ
 	        pre-condition ValidateCPFEQ
 	    delegate req to reqAge
-	}
+	delegate req to reqCPF }
 	
 	action def BuildCreatePersonalInfoQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
 	    constraint :
@@ -1843,7 +1854,7 @@ package FoodFastComponents {
 	constraint BuildCreatePersonalInfoQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
 	constraint BuildCreatePersonalInfoResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
-	activity def UpdatePersonalInfoCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	activity def UpdatePersonalInfoAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
 	    body {
 	        actions :
 	            ValidateUpdatePersonalInfoAN : ValidateUpdatePersonalInfoAN {
@@ -1892,7 +1903,7 @@ package FoodFastComponents {
 	constraint BuildUpdatePersonalInfoQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
 	constraint BuildUpdatePersonalInfoResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
-	activity def UserDeleteCP ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
+	activity def UserDeleteAC ( p0 : HTTPRequestDT ) ( p3 : DBResponseDT ) : ( p1 : HTTPResponseDT , p2 : DBQueryDT ) {
 	    body {
 	        actions :
 	            ValidateUserDeleteAN : ValidateUserDeleteAN {
@@ -1902,7 +1913,7 @@ package FoodFastComponents {
 	
 	            BuildUserDeleteQueryAN : BuildUserDeleteQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildUserDeleteResponseAN : BuildUserDeleteResponseAN {
@@ -1914,7 +1925,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildUserDeleteQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUserDeleteResponseAN
-	    }
+	    flow from ValidateUserDeleteAN to reqBuild }
 	}
 	
 	action def ValidateUserDeleteAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -1951,7 +1962,7 @@ package FoodFastComponents {
 	
 	            BuildUserRetrieveQueryAN : BuildUserRetrieveQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildUserRetrieveResponseAN : BuildUserRetrieveResponseAN {
@@ -1963,7 +1974,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildUserRetrieveQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUserRetrieveResponseAN
-	    }
+	    flow from ValidateUserRetrieveAN to reqBuild }
 	}
 	
 	action def ValidateUserRetrieveAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -1995,7 +2006,7 @@ package FoodFastComponents {
 	
 	            BuildUserAuthQueryAN : BuildUserAuthQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildUserAuthResponseAN : BuildUserAuthResponseAN {
@@ -2007,7 +2018,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildUserAuthQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUserAuthResponseAN
-	    }
+	    flow from ValidateUserAuthAN to reqBuild }
 	}
 	
 	action def ValidateUserAuthAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2048,7 +2059,7 @@ package FoodFastComponents {
 	
 	            BuildCreatePaymentMethodQueryAN : BuildCreatePaymentMethodQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildCreatePaymentMethodResponseAN : BuildCreatePaymentMethodResponseAN {
@@ -2060,7 +2071,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildCreatePaymentMethodQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildCreatePaymentMethodResponseAN
-	    }
+	    flow from ValidateCreatePaymentMethodAN to reqBuild }
 	}
 	
 	action def ValidateCreatePaymentMethodAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2068,8 +2079,8 @@ package FoodFastComponents {
 	        pre-condition ValidateCardNumberEQ
 	        pre-condition ValidateCardExpirationEQ
 	        pre-condition ValidateCardCVVEQ
-	    delegate req to req
-	}
+	    delegate req to reqNumber
+	delegate req to reqDate delegate req to reqCVV }
 	
 	action def BuildCreatePaymentMethodQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
 	    constraint :
@@ -2095,7 +2106,7 @@ package FoodFastComponents {
 	
 	            BuildUpdatePaymentMethodQueryAN : BuildUpdatePaymentMethodQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildUpdatePaymentMethodResponseAN : BuildUpdatePaymentMethodResponseAN {
@@ -2107,7 +2118,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildUpdatePaymentMethodQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUpdatePaymentMethodResponseAN
-	    }
+	    flow from ValidateUpdatePaymentMethodAN to reqBuild }
 	}
 	
 	action def ValidateUpdatePaymentMethodAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2117,7 +2128,7 @@ package FoodFastComponents {
 	        pre-condition ValidateCardExpirationEQ
 	        pre-condition ValidateCardCVVEQ
 	    delegate req to req
-	}
+	delegate req to reqNumber delegate req to reqDate delegate req to reqCVV }
 	
 	action def BuildUpdatePaymentMethodQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
 	    constraint :
@@ -2133,9 +2144,9 @@ package FoodFastComponents {
 	    delegate BuildUpdatePaymentMethodResponseAN to res
 	}
 	
-	constraint ValidateCardNumberEQ ( req : HTTPRequestDT ) { }
-	constraint ValidateCardExpirationEQ ( req : HTTPRequestDT ) { }
-	constraint ValidateCardCVVEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateCardNumberEQ ( reqNumber : HTTPRequestDT ) { }
+	constraint ValidateCardExpirationEQ ( reqDate : HTTPRequestDT ) { }
+	constraint ValidateCardCVVEQ ( reqCVV : HTTPRequestDT ) { }
 	constraint BuildCreatePaymentMethodQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
 	constraint BuildCreatePaymentMethodResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
@@ -2153,7 +2164,7 @@ package FoodFastComponents {
 	
 	            BuildRegisterBiometricQueryAN : BuildRegisterBiometricQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildRegisterBiometricResponseAN : BuildRegisterBiometricResponseAN {
@@ -2165,15 +2176,15 @@ package FoodFastComponents {
 	        delegate p2 to BuildRegisterBiometricQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildRegisterBiometricResponseAN
-	    }
+	    flow from ValidateRegisterBiometricAN to reqBuild }
 	}
 	
 	action def ValidateRegisterBiometricAN ( req : HTTPRequestDT ) : HTTPRequestDT {
 	    constraint :
 	        pre-condition ValidateBiometricDataEQ
 	        pre-condition ValidateUserExistsEQ
-	    delegate req to req
-	}
+	    delegate req to reqBio
+	delegate req to reqUser }
 	
 	action def BuildRegisterBiometricQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
 	    constraint :
@@ -2189,8 +2200,8 @@ package FoodFastComponents {
 	    delegate BuildRegisterBiometricResponseAN to res
 	}
 	
-	constraint ValidateBiometricDataEQ ( req : HTTPRequestDT ) { }
-	constraint ValidateUserExistsEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateBiometricDataEQ ( reqBio : HTTPRequestDT ) { }
+	constraint ValidateUserExistsEQ ( reqUser : HTTPRequestDT ) { }
 	constraint BuildRegisterBiometricQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
 	constraint BuildRegisterBiometricResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
@@ -2204,7 +2215,7 @@ package FoodFastComponents {
 	
 	            BuildRemoveBiometricQueryAN : BuildRemoveBiometricQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildRemoveBiometricResponseAN : BuildRemoveBiometricResponseAN {
@@ -2216,7 +2227,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildRemoveBiometricQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildRemoveBiometricResponseAN
-	    }
+	    flow from ValidateRemoveBiometricAN to reqBuild }
 	}
 	
 	action def ValidateRemoveBiometricAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2253,7 +2264,7 @@ package FoodFastComponents {
 	
 	            BuildIdentifyBiometricQueryAN : BuildIdentifyBiometricQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            // Ação 1: Processa os dados e retorna o ID ou -1
@@ -2274,7 +2285,7 @@ package FoodFastComponents {
 	        delegate p0 to originalReq // Para a verificação
 	        delegate p2 to BuildIdentifyBiometricQueryAN
 	        delegate p3 to dbRes
-	    }
+	    flow from ValidateRecognitionInputAN to reqBuild flow from VerifyBiometricMatchAN to userId }
 	}
 	
 	action def ValidateRecognitionInputAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2320,7 +2331,7 @@ package FoodFastComponents {
 	
 	            BuildUpdateOrderQueryAN : BuildUpdateOrderQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildUpdateOrderResponseAN : BuildUpdateOrderResponseAN {
@@ -2332,7 +2343,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildUpdateOrderQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUpdateOrderResponseAN
-	    }
+	    flow from ValidateUpdateOrderAN to reqBuild }
 	}
 	
 	action def ValidateUpdateOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2369,7 +2380,7 @@ package FoodFastComponents {
 	
 	            BuildCheckDebtsQueryAN : BuildCheckDebtsQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildCheckDebtsResponseAN : BuildCheckDebtsResponseAN {
@@ -2381,7 +2392,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildCheckDebtsQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildCheckDebtsResponseAN
-	    }
+	    flow from ValidateCheckDebtsRequestAN to reqBuild }
 	}
 	
 	action def ValidateCheckDebtsRequestAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2418,7 +2429,7 @@ package FoodFastComponents {
 	
 	            BuildRetrieveOrderQueryAN : BuildRetrieveOrderQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildRetrieveOrderResponseAN : BuildRetrieveOrderResponseAN {
@@ -2430,7 +2441,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildRetrieveOrderQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildRetrieveOrderResponseAN
-	    }
+	    flow from ValidateRetrieveOrderAN to reqBuild }
 	}
 	
 	action def ValidateRetrieveOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2467,7 +2478,7 @@ package FoodFastComponents {
 	
 	            BuildCreateOrderQueryAN : BuildCreateOrderQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqBuild : HTTPRequestDT ;
 	            }
 	
 	            BuildProcessingRequestAN : BuildProcessingRequestAN {
@@ -2479,7 +2490,7 @@ package FoodFastComponents {
 	            BuildFinalOrderResponseAN : BuildFinalOrderResponseAN {
 	                using pins :
 	                    procRes : HTTPResponseDT ;
-	                    dbRes : DBResponseDT ;
+	                    dbResFinal : DBResponseDT ;
 	            }
 	
 	        delegate p0 to req
@@ -2489,7 +2500,7 @@ package FoodFastComponents {
 	        delegate p2 to BuildCreateOrderQueryAN
 	        delegate p4 to BuildProcessingRequestAN
 	        delegate p1 to BuildFinalOrderResponseAN
-	    }
+	    flow from ValidateCreateOrderAN to reqBuild delegate p3 to dbResFinal }
 	}
 	
 	action def ValidateCreateOrderAN ( req : HTTPRequestDT ) : HTTPRequestDT {
@@ -2543,7 +2554,7 @@ package FoodFastComponents {
 	        delegate order to order
 	        delegate order to originalOrder
 	        delegate stockRes to stockRes
-	    }
+	    delegate stockReq to BuildStockCheckQueryAN delegate available to VerifyStockAvailabilityAN }
 	}
 	
 	action def BuildStockCheckQueryAN ( order : OrderDT ) : HTTPRequestDT {
@@ -2575,7 +2586,7 @@ package FoodFastComponents {
 	            ExecutePaymentTransactionAN : ExecutePaymentTransactionAN {
 	                using pins :
 	                    dbRes : DBResponseDT ;
-	                    chargeReq : OrderChargeDT ;
+	                    chargeReqExec : OrderChargeDT ;
 	            }
 	
 	            BuildPaymentStatusAN : BuildPaymentStatusAN {
@@ -2585,7 +2596,7 @@ package FoodFastComponents {
 	
 	        delegate chargeReq to chargeReq
 	        delegate dbRes to dbRes
-	    }
+	    delegate qry to BuildGetPaymentMethodQueryAN delegate chargeReq to chargeReqExec delegate status to BuildPaymentStatusAN flow from ExecutePaymentTransactionAN to rawResult }
 	}
 	
 	action def BuildGetPaymentMethodQueryAN ( chargeReq : OrderChargeDT ) : DBQueryDT {
@@ -2623,7 +2634,7 @@ package FoodFastComponents {
 	            }
 	
 	        delegate items to items
-	    }
+	    delegate totalPrice to CalculateTotalAN }
 	}
 	
 	action def CalculateTotalAN ( items : OrderItemArrayDT ) : Real {
@@ -2711,22 +2722,22 @@ package FoodFastComponents {
 	        actions :
 	            BuildCheckDebtsRequestAN : BuildCheckDebtsRequestAN {
 	                using pins :
-	                    order : OrderDT ;
+	                    orderDebts : OrderDT ;
 	            }
 	
 	            ExtractItemsForAvailabilityAN : ExtractItemsForAvailabilityAN {
 	                using pins :
-	                    order : OrderDT ;
+	                    orderAvailability : OrderDT ;
 	            }
 	
 	            ForwardOrderToProcessingAN : ForwardOrderToProcessingAN {
 	                using pins :
-	                    order : OrderDT ;
+	                    orderProcessing : OrderDT ;
 	            }
 	
 	            PreparePaymentChargeAN : PreparePaymentChargeAN {
 	                using pins :
-	                    order : OrderDT ;
+	                    orderPayment : OrderDT ;
 	                    procResult : OrderProcessingDT ;
 	            }
 	
@@ -2737,12 +2748,12 @@ package FoodFastComponents {
 	                    payResult : PaymentStatusEnum ;
 	            }
 	
-	        delegate order to order
+	        delegate order to orderDebts
 	        delegate debtsRes to debtsRes
 	        delegate availResult to availResult
 	        delegate procResult to procResult
 	        delegate payResult to payResult
-	    }
+	    delegate debtsReq to BuildCheckDebtsRequestAN delegate order to orderAvailability delegate itemsForCheck to ExtractItemsForAvailabilityAN delegate order to orderProcessing delegate orderForProc to ForwardOrderToProcessingAN delegate order to orderPayment delegate chargeReq to PreparePaymentChargeAN delegate finalResponse to EvaluateProcessingResultAN }
 	}
 	
 	action def BuildCheckDebtsRequestAN ( order : OrderDT ) : HTTPRequestDT {
@@ -2824,9 +2835,7 @@ package FoodFastComponents {
 	    cpf : String ) (
 	    userRes : HTTPResponseDT ) (
 	    selectedType : BiometricTypeEnum ) (
-	    sensorRes : HTTPResponseDT ) (
-	    regRes : HTTPResponseDT
-	) : (
+	    sensorRes : HTTPResponseDT ) : (
 	    userReq : HTTPRequestDT,
 	    enableSel : Boolean,
 	    sensorReq : HTTPRequestDT,
@@ -2836,7 +2845,7 @@ package FoodFastComponents {
 	        actions :
 	            BuildUserCheckRequestAN : BuildUserCheckRequestAN {
 	                using pins :
-	                    cpf : String ;
+	                    cpfBuild : String ;
 	            }
 	
 	            EvaluateUserAndEnableSelAN : EvaluateUserAndEnableSelAN {
@@ -2852,14 +2861,14 @@ package FoodFastComponents {
 	            BuildRegisterRequestAN : BuildRegisterRequestAN {
 	                using pins :
 	                    sensorRes : HTTPResponseDT ;
-	                    cpf : String ;
+	                    cpfRegister : String ;
 	            }
 	
-	        delegate cpf to cpf
+	        delegate cpf to cpfBuild
 	        delegate userRes to userRes
 	        delegate selectedType to selectedType
 	        delegate sensorRes to sensorRes
-	    }
+	    delegate userReq to BuildUserCheckRequestAN delegate enableSel to EvaluateUserAndEnableSelAN delegate sensorReq to BuildSensorCaptureRequestAN delegate cpf to cpfRegister delegate regReq to BuildRegisterRequestAN }
 	}
 	
 	action def BuildUserCheckRequestAN ( cpf : String ) : HTTPRequestDT {
@@ -3180,11 +3189,10 @@ package FoodFastComponents {
 	) : (
 	    dispenseCommand : DispenserProductDT,
 	    enableBiometricSelectionOut : Boolean,
-	    biometricSensorActiveOut : Boolean,
 	    sensorRequestOut : HTTPRequestDT,
 	    identifyUserRequestOut : HTTPRequestDT,
-	    orderRequestOut : HTTPRequestDT
-	) {
+	    orderRequestOut : HTTPRequestDT, 
+	    selectionIsOn : Boolean ) {
 	    body {
 	        actions :
 	            MaintainBiometricSelectionAN : MaintainBiometricSelectionAN {
@@ -3214,7 +3222,7 @@ package FoodFastComponents {
 	
 	            ManageProductSelectionAN : ManageProductSelectionAN {
 	                using pins :
-	                    productSelectionTrigger : Boolean ;
+	                    userIdentified : Boolean ;
 	            }
 	
 	            ProcessProductChosenAN : ProcessProductChosenAN {
@@ -3227,11 +3235,6 @@ package FoodFastComponents {
 	                    identifiedUserInput : UserDT ;
 	                    selectedProductInput : Int ;
 	                    localMachineIdInput : Int ;
-	            }
-	
-	            SendOrderRequestAN : SendOrderRequestAN {
-	                using pins :
-	                    builtOrderReqInput : HTTPRequestDT ;
 	            }
 	
 	            GenerateDispenserCommandAN : GenerateDispenserCommandAN {
@@ -3257,7 +3260,7 @@ package FoodFastComponents {
 	        delegate bioServerResponseIn to bioServerHttpInput
 	
 	        // Ação 6
-	        delegate EvaluateBioServerResultAN to productSelectionTrigger
+	        delegate EvaluateBioServerResultAN to userIdentified
 	
 	        // Ação 7
 	        delegate selectedProductId to chosenProductInput
@@ -3275,14 +3278,19 @@ package FoodFastComponents {
 	
 	        // Saídas
 	        delegate enableBiometricSelectionOut to MaintainBiometricSelectionAN
-	        delegate biometricSensorActiveOut to PrepareSensorRequestAN
+	        
 	        delegate sensorRequestOut to PrepareSensorRequestAN
 	        delegate identifyUserRequestOut to BuildUserIdentificationReqAN
 	        delegate orderRequestOut to CreateOrderRequestAN
-	        delegate dispenseCommand to GenerateDispenserCommandAN
+	        delegate dispenseCommand to GenerateDispenserCommandAN 
+	        flow from InterpretSensorReturnAN to biometricRawInput 
+	        flow from EvaluateBioServerResultAN to userIdentified 
+	        delegate selectionIsOn to ManageProductSelectionAN 
+	        flow from EvaluateBioServerResultAN to identifiedUserInput 
+	        flow from ProcessProductChosenAN to selectedProductInput 
+	        flow from machineLocalId to localMachineIdInput
 	
 	        datastore alwaysEnabledFlag : Boolean
-	        datastore biometricSelectionState : Boolean
 	        datastore machineLocalId : Int
 	    }
 	}
@@ -3322,10 +3330,10 @@ package FoodFastComponents {
 	    delegate EvaluateBioServerResultAN to userParsed
 	}
 	
-	action def ManageProductSelectionAN ( productSelectionTrigger : Boolean ) : Boolean {
+	action def ManageProductSelectionAN ( userIdentified : UserDT ) : Boolean {
 	    constraint :
 	        post-condition ManageProductSelectionEQ
-	    delegate productSelectionTrigger to productSelectionTrigger
+	    delegate userIdentified to userIdentified
 	    delegate ManageProductSelectionAN to allowProductSelection
 	}
 	
@@ -3347,12 +3355,7 @@ package FoodFastComponents {
 	    delegate CreateOrderRequestAN to orderReqBuilt
 	}
 	
-	action def SendOrderRequestAN ( builtOrderReqInput : HTTPRequestDT ) : HTTPResponseDT {
-	    constraint :
-	        post-condition SendOrderRequestEQ
-	    delegate builtOrderReqInput to builtOrderReqInput
-	    delegate SendOrderRequestAN to orderResponseOut
-	}
+	
 	
 	action def GenerateDispenserCommandAN ( finalOrderResponseInput : HTTPResponseDT ) : DispenserProductDT {
 	    constraint :
@@ -3366,10 +3369,10 @@ package FoodFastComponents {
 	constraint InterpretSensorReturnEQ ( sensorHttpInput : HTTPResponseDT ) : ( bioRawOut : BiometricRawDT ) { }
 	constraint BuildUserIdentificationReqEQ ( biometricRawInput : BiometricRawDT ) : ( identifyReq : HTTPRequestDT ) { }
 	constraint EvaluateBioServerResultEQ ( bioServerHttpInput : HTTPResponseDT ) : ( userParsed : UserDT ) { }
-	constraint ManageProductSelectionEQ ( productSelectionTrigger : Boolean ) : ( allowProductSelection : Boolean ) { }
+	constraint ManageProductSelectionEQ ( userIdentified : UserDT ) : ( allowProductSelection : Boolean ) { }
 	constraint ProcessProductChosenEQ ( chosenProductInput : Int ) : ( productOut : Int ) { }
 	constraint CreateOrderRequestEQ ( identifiedUserInput : UserDT, selectedProductInput : Int, localMachineIdInput : Int ) : ( orderReqBuilt : HTTPRequestDT ) { }
-	constraint SendOrderRequestEQ ( builtOrderReqInput : HTTPRequestDT ) : ( orderResponseOut : HTTPResponseDT ) { }
+	
 	constraint GenerateDispenserCommandEQ ( finalOrderResponseInput : HTTPResponseDT ) : ( dispenserCmdOut : DispenserProductDT ) { }
 	
 	activity def TapFlowControllerFlowAC (
@@ -3386,7 +3389,6 @@ package FoodFastComponents {
 	    orderServerResponse_In : HTTPResponseDT
 	) : (
 	    biometricSelectionEnabled_Out : Boolean,
-	    biometricSensorActive_Out : Boolean,
 	    sensorRequest_Out : HTTPRequestDT,
 	    identifyUserRequest_Out : HTTPRequestDT,
 	    checkDebtsRequest_Out : HTTPRequestDT,
@@ -3473,13 +3475,13 @@ package FoodFastComponents {
 	        delegate tapDispensedAmount_In to amountIn
 	        delegate LOCAL_TAP_MACHINE_ID to tapMachineIdIn
 	        delegate biometricSelectionEnabled_Out to MaintainSelectionAN
-	        delegate biometricSensorActive_Out to PrepareSensorReqAN
+	        
 	        delegate sensorRequest_Out to PrepareSensorReqAN
 	        delegate identifyUserRequest_Out to BuildIdentifyReqAN
 	        delegate checkDebtsRequest_Out to BuildDebtCheckReqAN
 	        delegate requestProductInfo_Out to BuildProductInfoReqAN
 	        delegate tapCommand_Out to ActivateTapAN
-	        delegate createOrderRequest_Out to BuildOrderCreationReqAN
+	        delegate createOrderRequest_Out to BuildOrderCreationReqAN flow from ParseSensorReturnAN to rawBioIn flow from ParseBioServerAN to authenticatedUser flow from LOCAL_TAP_MACHINE_ID to localMachineIdReq flow from EvaluateDebtResponseAN to triggerProductReq flow from ParseProductInfoAN to productInfoIn flow from LOCAL_TAP_MACHINE_ID to tapMachineIdIn flow from ParseProductInfoAN to productOrderIn flow from ParseBioServerAN to userOrderIn
 	
 	        datastore ALWAYS_TRUE : Boolean
 	        datastore LOCAL_TAP_MACHINE_ID : Int
@@ -3608,7 +3610,7 @@ package FoodFastComponents {
 	    productListReqOut : HTTPRequestDT,
 	    orderCreateReqOut : HTTPRequestDT,
 	    orderToPrintOut : OrderDT
-	) {
+	, productsToDisplay : ProductArrayDT ) {
 	    body {
 	        actions :
 	            KeepBiometricSelectionAN : KeepBiometricSelectionAN {
@@ -3636,16 +3638,6 @@ package FoodFastComponents {
 	                    bioHttpIn : HTTPResponseDT ;
 	            }
 	
-	            BuildProductListReqAN : BuildProductListReqAN {
-	                using pins :
-	                    machineIdInput : Int ;
-	            }
-	
-	            EnableDisplayAN : EnableDisplayAN {
-	                using pins :
-	                    displayTrigger : Boolean ;
-	            }
-	
 	            ProcessSelectedProductsAN : ProcessSelectedProductsAN {
 	                using pins :
 	                    selectedArrayIn : OrderItemArrayDT ;
@@ -3660,7 +3652,7 @@ package FoodFastComponents {
 	            ExtractOrderToPrintAN : ExtractOrderToPrintAN {
 	                using pins :
 	                    httpOrderRespIn : HTTPResponseDT ;
-	            }
+	            } ValidateIfTheUserIsValidAN : ValidateIfTheUserIsValidAN { using pins : userToVerify : UserDT ; } BuildProductListReqAN : BuildProductListReqAN { using pins : machineIdInput : Int ; userIsValidReq : Boolean ; } ExtractProductsAvailablesAN : ExtractProductsAvailablesAN { using pins : productsResponse : HTTPResponseDT ; } EnableDisplayAN : EnableDisplayAN { using pins : userIsValidDisplay : Boolean ; availableProducts : ProductArrayDT ; }
 	
 	        flow from alwaysEnabledFlag to trigSelect
 	        delegate selectedBioTypeTotem to bioTypeInput
@@ -3668,22 +3660,20 @@ package FoodFastComponents {
 	        delegate ExtractBiometricRawAN to rawBioInput
 	        delegate bioServerResponseTotem to bioHttpIn
 	
-	        delegate InterpretUserInfoAN to displayTrigger
-	        delegate machineLocalId to machineIdInput
 	
 	        delegate selectedProductsIn to selectedArrayIn
 	        delegate ProcessSelectedProductsAN to chosenItemsInput
 	        delegate InterpretUserInfoAN to userInfoInput
 	
-	        delegate productListReqOut to BuildProductListReqAN
 	        delegate sensorRequestOut to BuildSensorReqAN
 	        delegate identifyUserReqOut to BuildIdentifyUserReqAN
-	        delegate enableDisplayOut to EnableDisplayAN
 	        delegate activateBiometricSelectionOut to KeepBiometricSelectionAN
 	        delegate orderCreateReqOut to BuildOrderCreateReqAN
 	
 	        delegate orderServerResponseTotem to httpOrderRespIn
-	        delegate orderToPrintOut to ExtractOrderToPrintAN
+	        delegate orderToPrintOut to ExtractOrderToPrintAN 
+	        flow from ExtractBiometricRawAN to rawBioInput 
+	        delegate identifyUserReqOut to BuildIdentifyUserReqTAN flow from InterpretUserInfoAN to userToVerify flow from machineLocalId to machineIdInput flow from ValidateIfTheUserIsValidAN to userIsValidReq delegate productListReqOut to BuildProductListReqAN delegate productServerResponseTotem to productsResponse flow from ExtractProductsAvailablesAN to availableProducts flow from ValidateIfTheUserIsValidAN to userIsValidDisplay delegate enableDisplayOut to EnableDisplayAN delegate productsToDisplay to ExtractProductsAvailablesAN flow from InterpretUserInfoAN to userInfoInput flow from ProcessSelectedProductsAN to chosenItemsInput
 	
 	        datastore alwaysEnabledFlag : Boolean
 	        datastore machineLocalId : Int
@@ -3725,19 +3715,19 @@ package FoodFastComponents {
 	    delegate InterpretUserInfoAN to userOut
 	}
 	
-	action def BuildProductListReqAN ( machineIdInput : Int ) : HTTPRequestDT {
+	action def BuildProductListReqAN ( machineIdInput : Int , userIsValidReq : Boolean ) : HTTPRequestDT {
 	    constraint :
 	        post-condition BuildProductListReqEQ
 	    delegate machineIdInput to machineIdInput
 	    delegate BuildProductListReqAN to prodReq
-	}
+	delegate userIsValidReq to userIsValidReq }
 	
-	action def EnableDisplayAN ( displayTrigger : Boolean ) : Boolean {
+	action def EnableDisplayAN ( userIsValidDisplay : Boolean , availableProducts : ProductArrayDT ) : Boolean {
 	    constraint :
 	        post-condition EnableDisplayEQ
-	    delegate displayTrigger to displayTrigger
+	    delegate userIsValidDisplay to userIsValidDisplay
 	    delegate EnableDisplayAN to displayOut
-	}
+	delegate availableProducts to availableProducts }
 	
 	action def ProcessSelectedProductsAN ( selectedArrayIn : OrderItemArrayDT ) : OrderItemArrayDT {
 	    constraint :
@@ -3767,12 +3757,12 @@ package FoodFastComponents {
 	constraint ExtractBiometricRawEQ ( sensorHttpIn : HTTPResponseDT ) : ( rawOut : BiometricRawDT ) { }
 	constraint BuildIdentifyUserReqTEQ ( rawBioInput : BiometricRawDT ) : ( idReq : HTTPRequestDT ) { }
 	constraint InterpretUserInfoEQ ( bioHttpIn : HTTPResponseDT ) : ( userOut : UserDT ) { }
-	constraint BuildProductListReqEQ ( machineIdInput : Int ) : ( prodReq : HTTPRequestDT ) { }
-	constraint EnableDisplayEQ ( displayTrigger : Boolean ) : ( displayOut : Boolean ) { }
+	constraint BuildProductListReqEQ ( machineIdInput : Int , userIsValidReq : Boolean ) : ( prodReq : HTTPRequestDT ) { }
+	constraint EnableDisplayEQ ( userIsValidDisplay : Boolean , availableProducts : ProductArrayDT ) : ( displayOut : Boolean ) { }
 	constraint ProcessSelectedProductsEQ ( selectedArrayIn : OrderItemArrayDT ) : ( selectedOut : OrderItemArrayDT ) { }
 	constraint BuildOrderCreateReqEQ ( userInfoInput : UserDT, chosenItemsInput : OrderItemArrayDT ) : ( buildReq : HTTPRequestDT ) { }
 	constraint ExtractOrderToPrintEQ ( httpOrderRespIn : HTTPResponseDT ) : ( printedOrder : OrderDT ) { }
-} 
+action def ValidateIfTheUserIsValidAN ( userToVerify : UserDT ) : Boolean { constraint : post-condition ValidateIfTheUserIsValidEQ delegate userToVerify to userToVerify delegate ValidateIfTheUserIsValidAN to userNotIsNull } constraint ValidateIfTheUserIsValidEQ ( userToVerify : UserDT ) : ( userNotIsNull : Boolean ) { } constraint ExtractProductsAvailablesEQ ( productsResponse : HTTPResponseDT ) : ( products : ProductArrayDT ) { } action def ExtractProductsAvailablesAN ( productsResponse : HTTPResponseDT ) : ProductArrayDT { constraint : post-condition ExtractProductsAvailablesEQ delegate productsResponse to productsResponse delegate ExtractProductsAvailablesAN to products } } 
 
 package FoodFastPorts { 
 	import SysADLTypes ;
@@ -3937,7 +3927,7 @@ package FoodFastPorts {
 	port def PickupOrderAddedOPT { 
 		flow out PickupOrderAddedDT
 	} 
-} 
+port def ProductArrayIPT { flow in ProductArrayDT } port def ProductArrayOPT { flow out ProductArrayDT } } 
 
 Requirement ManageUsersFR ( 1 ) { 
 	text = "\"O sistema deve permitir o gerenciamento de usuários.\""
