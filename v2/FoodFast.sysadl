@@ -829,7 +829,30 @@ package FoodFastComponents {
 					using ports : sensors_Component : SensorIPT ;
 				} 
 			
-			BiometricTotemProcessorCP : BiometricTotemProcessorCP { using ports : httpClient_BiometricTotemProcessor_external : HTTPClientP ; httpClient_BiometricTotemProcessor_internal : HTTPClientP ; cpfString_BiometricTotem : StringIPT ; enableSelecion_Totem : BooleanOPT ; selectedBiometricType : BiometricTypeIPT ; } SelectBiometricTypeCP : SelectBiometricTypeCP { using ports : biometricType : BiometricTypeOPT ; enableSelection_BiometricType : BooleanIPT ; } connectors : sensorData : SensorCN bindings httpClient_BiometricTotemProcessor_internal = sensors_Component ; cpfConnector : StringCN bindings keywordOutput = cpfString_BiometricTotem ; biometricType : BiometricTypeCN bindings biometricType = selectedBiometricType ; enableSelection : BooleanCN bindings enableSelecion_Totem = enableSelection_BiometricType ; delegations : httpClient_BiometricTotemProcessor_external to httpClient_BiometricTotem }
+				BiometricTotemProcessorCP : BiometricTotemProcessorCP { 
+					using ports : 
+						httpClient_BiometricTotemProcessor_external : HTTPClientP ;
+						httpClient_BiometricTotemProcessor_internal : HTTPClientP ; 
+						cpfString_BiometricTotem : StringIPT ; 
+						enableSelecion_Totem : BooleanOPT ; 
+						selectedBiometricType : BiometricTypeIPT ;
+				} 
+				
+				SelectBiometricTypeCP : SelectBiometricTypeCP { 
+					using ports : 
+						biometricType : BiometricTypeOPT ; 
+						enableSelection_BiometricType : BooleanIPT ;
+				} 
+			
+			connectors : 
+				sensorData : SensorCN bindings httpClient_BiometricTotemProcessor_internal = sensors_Component ; 
+				cpfConnector : StringCN bindings keywordOutput = cpfString_BiometricTotem ; 
+				biometricType : BiometricTypeCN bindings biometricType = selectedBiometricType ; 
+				enableSelection : BooleanCN bindings enableSelecion_Totem = enableSelection_BiometricType ; 
+			
+			delegations : 
+				httpClient_BiometricTotemProcessor_external to httpClient_BiometricTotem 
+		}
 	}
 	
 	component def ProductServerCP { 
@@ -1179,6 +1202,14 @@ package FoodFastComponents {
 						httpClient_DMSnackSensors : HTTPClientP ; 
 						httpClient_DMSnackBiometricServer : HTTPClientP ; 
 						httpClient_DMSnackOrderServer : HTTPClientP ;
+						activeSelectionBiometric : BooleanOPT ;
+						biometricSelected : BiometricTypeIPT ;
+				} 
+			
+				SelectBiometricTypeCP : SelectBiometricTypeCP { 
+					using ports : 
+						biometricType : BiometricTypeOPT ; 
+						enableSelection_BiometricType : BooleanIPT ;
 				} 
 			
 			connectors : 
@@ -1186,10 +1217,11 @@ package FoodFastComponents {
 				dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; 
 				selectedSnackId : IntCN bindings snackId = selectedSnackId ; 
 				authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; 
-			
+				enable : BooleanCN bindings activeSelectionBiometric = enableSelection_BiometricType ; 
+				selected : BiometricTypeCN bindings biometricType = biometricSelected ; 
 			delegations : 
 				httpClient_DMSnackBiometricServer to httpClient_DispenserSnackToBiometricServer
-				 httpClient_DMSnackOrderServer to httpClient_DispenserSnackToOrderServer
+				httpClient_DMSnackOrderServer to httpClient_DispenserSnackToOrderServer
 		}
 	} 
 	
@@ -1207,6 +1239,8 @@ package FoodFastComponents {
 			httpClient_DMSnackSensors : HTTPClientP ; 
 			httpClient_DMSnackBiometricServer : HTTPClientP ; 
 			httpClient_DMSnackOrderServer : HTTPClientP ;
+			activeSelectionBiometric : BooleanOPT ; 
+			biometricSelected : BiometricTypeIPT ; 
 	} 
 	
 	boundary component def HardwareDispenserCP { 
@@ -1244,13 +1278,24 @@ package FoodFastComponents {
 						httpClient_DMSnackSensors : HTTPClientP ; 
 						httpClient_DMSnackBiometricServer : HTTPClientP ; 
 						httpClient_DMSnackOrderServer : HTTPClientP ;
+						activeSelectionBiometric : BooleanOPT ;
+						biometricSelected : BiometricTypeIPT ;
 				} 
+				
+				SelectBiometricTypeCP : SelectBiometricTypeCP { 
+					using ports : 
+						biometricType : BiometricTypeOPT ; 
+						enableSelection_BiometricType : BooleanIPT ;
+				} 
+			
 			
 			connectors : 
 				biometricData : SensorCN bindings httpClient_DMSnackSensors = sensors_Component ; 
 				dispenserSnackCMD : DispenserProductCN bindings dispenserCommandOut = dispenserCommand ; 
 				selectedSnackId : IntCN bindings snackId = selectedSnackId ; 
 				authorizedSelection : BooleanCN bindings selectionIsOn = selectionOn ; 
+				enable : BooleanCN bindings activeSelectionBiometric = enableSelection_BiometricType ; 
+				selected : BiometricTypeCN bindings biometricType = biometricSelected ; 
 			
 			delegations : 
 				httpClient_DMSnackBiometricServer to httpClient_DispenserDrinkToBiometricServer 
@@ -1279,6 +1324,14 @@ package FoodFastComponents {
 						tapReleasedCMD : BooleanOPT ; 
 						amountOfDrink : IntIPT ; 
 						httpClient_TapSensors : HTTPClientP ;
+						activeSelectionBiometric : BooleanOPT ;
+						biometricSelected : BiometricTypeIPT ;
+				} 
+				
+				SelectBiometricTypeCP : SelectBiometricTypeCP { 
+					using ports : 
+						biometricType : BiometricTypeOPT ; 
+						enableSelection_BiometricType : BooleanIPT ;
 				} 
 				
 				TapActuatorCP : TapActuatorCP { 
@@ -1291,11 +1344,13 @@ package FoodFastComponents {
 				biometricData : SensorCN bindings httpClient_TapSensors = sensors_Component ; 
 				tapReleased : BooleanCN bindings tapReleasedCMD = tapReleased ; 
 				drinkAmount : IntCN bindings amountDispensedTap = amountOfDrink ; 
+				enable : BooleanCN bindings activeSelectionBiometric = enableSelection_BiometricType ; 
+				selected : BiometricTypeCN bindings biometricType = biometricSelected ; 
 			
 			delegations : 
 				httpClient_TapControllerToBiometricServer to httpClient_TapToBiometricServer
-				 httpClient_TapControllerToProductServer to httpClient_TapToProductServer
-				  httpClient_TapControllerToOrderServer to httpClient_TapToOrderServer
+				httpClient_TapControllerToProductServer to httpClient_TapToProductServer
+				httpClient_TapControllerToOrderServer to httpClient_TapToOrderServer
 		}
 	} 
 	
@@ -1313,7 +1368,9 @@ package FoodFastComponents {
 			tapReleasedCMD : BooleanOPT ; 
 			amountOfDrink : IntIPT ; 
 			httpClient_TapSensors : HTTPClientP ;
-	}
+			activeSelectionBiometric : BooleanOPT ; 
+			biometricSelected : BiometricTypeIPT ; 
+		}
 	
 	component def TotemCP { 
 		ports : 
@@ -1332,6 +1389,8 @@ package FoodFastComponents {
 						selectedProducts : OrderItemArrayIPT ; 
 						enableDisplay : BooleanOPT ; 
 						orderToPrint : OrderOPT ;
+						activeSelectionBiometric : BooleanOPT ;
+						biometricSelected : BiometricTypeIPT ;
 				} 
 				
 				BiometricSensorsCP : BiometricSensorsCP { 
@@ -1349,12 +1408,20 @@ package FoodFastComponents {
 						enabled : BooleanIPT ; 
 						orderProducts : OrderItemArrayOPT ;
 				} 
+				
+				SelectBiometricTypeCP : SelectBiometricTypeCP { 
+					using ports : 
+						biometricType : BiometricTypeOPT ; 
+						enableSelection_BiometricType : BooleanIPT ;
+				} 
 			
 			connectors : 
 				sensorData : SensorCN bindings httpClient_TotemSensors = sensors_Component ; 
 				printerData : OrderCN bindings orderToPrint = printerData ; 
 				enabled : BooleanCN bindings enableDisplay = enabled ; 
-				orderProducts : OrderItemArrayCN bindings orderProducts = selectedProducts ; 
+				orderProducts : OrderItemArrayCN bindings orderProducts = selectedProducts ;
+				enable : BooleanCN bindings activeSelectionBiometric = enableSelection_BiometricType ; 
+				selected : BiometricTypeCN bindings biometricType = biometricSelected ; 
 			
 			delegations : 
 				httpClient_TotemControllerToProductServer to httpClient_TotemToProductServer 
@@ -1372,7 +1439,7 @@ package FoodFastComponents {
 			selectedProducts : OrderItemArrayIPT ; 
 			enableDisplay : BooleanOPT ; 
 			orderToPrint : OrderOPT ;
-	} 
+	biometricSelected : BiometricTypeIPT ; activeSelectionBiometric : BooleanOPT ; } 
 	
 	boundary component def MenuDisplayCP { 
 		ports : 
@@ -1754,7 +1821,7 @@ package FoodFastComponents {
 	    constraint :
 	        pre-condition ValidateAgeEQ
 	        pre-condition ValidateCPFEQ
-	    delegate req to req
+	    delegate req to reqAge
 	}
 	
 	action def BuildCreatePersonalInfoQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
@@ -1771,8 +1838,8 @@ package FoodFastComponents {
 	    delegate BuildCreatePersonalInfoResponseAN to res
 	}
 	
-	constraint ValidateAgeEQ ( req : HTTPRequestDT ) { }
-	constraint ValidateCPFEQ ( req : HTTPRequestDT ) { }
+	constraint ValidateAgeEQ ( reqAge : HTTPRequestDT ) { }
+	constraint ValidateCPFEQ ( reqCPF : HTTPRequestDT ) { }
 	constraint BuildCreatePersonalInfoQueryEQ ( req : HTTPRequestDT ) : ( qry : DBQueryDT ) { }
 	constraint BuildCreatePersonalInfoResponseEQ ( dbRes : DBResponseDT ) : ( res : HTTPResponseDT ) { }
 	
@@ -1781,12 +1848,12 @@ package FoodFastComponents {
 	        actions :
 	            ValidateUpdatePersonalInfoAN : ValidateUpdatePersonalInfoAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqVal : HTTPRequestDT ;
 	            }
 	
 	            BuildUpdatePersonalInfoQueryAN : BuildUpdatePersonalInfoQueryAN {
 	                using pins :
-	                    req : HTTPRequestDT ;
+	                    reqQry : HTTPRequestDT ;
 	            }
 	
 	            BuildUpdatePersonalInfoResponseAN : BuildUpdatePersonalInfoResponseAN {
@@ -1794,19 +1861,19 @@ package FoodFastComponents {
 	                    res : DBResponseDT ;
 	            }
 	
-	        delegate p0 to req
+	        delegate p0 to reqVal
 	        delegate p2 to BuildUpdatePersonalInfoQueryAN
 	        delegate p3 to res
 	        delegate p1 to BuildUpdatePersonalInfoResponseAN
-	    }
+	    flow from ValidateUpdatePersonalInfoAN to reqQry }
 	}
 	
 	action def ValidateUpdatePersonalInfoAN ( req : HTTPRequestDT ) : HTTPRequestDT {
 	    constraint :
 	        pre-condition ValidateAgeEQ
 	        pre-condition ValidateCPFEQ
-	    delegate req to req
-	}
+	    delegate req to reqAge
+	delegate req to reqCPF }
 	
 	action def BuildUpdatePersonalInfoQueryAN ( req : HTTPRequestDT ) : DBQueryDT {
 	    constraint :
@@ -3103,6 +3170,608 @@ package FoodFastComponents {
 	constraint BuildFetchOrdersReqEQ ( trigger : Boolean ) : ( req : HTTPRequestDT ) { }
 	constraint UpdateDisplayListEQ ( readyOrdersRes : HTTPResponseDT ) : ( list : OrderItemArrayDT ) { }
 	constraint BuildOrderPlacedUpdateReqEQ ( newOrder : PickupOrderAddedDT ) : ( req : HTTPRequestDT ) { }
+	
+	activity def DispenserMachineFlowAC (
+	    selectedProductId : Int ) (
+	    chosenBiometricType : BiometricTypeEnum ) (
+	    sensorResponseIn : HTTPResponseDT ) (
+	    bioServerResponseIn : HTTPResponseDT ) (
+	    orderServerResponseIn : HTTPResponseDT
+	) : (
+	    dispenseCommand : DispenserProductDT,
+	    enableBiometricSelectionOut : Boolean,
+	    biometricSensorActiveOut : Boolean,
+	    sensorRequestOut : HTTPRequestDT,
+	    identifyUserRequestOut : HTTPRequestDT,
+	    orderRequestOut : HTTPRequestDT
+	) {
+	    body {
+	        actions :
+	            MaintainBiometricSelectionAN : MaintainBiometricSelectionAN {
+	                using pins :
+	                    keepSelectionTrigger : Boolean ;
+	            }
+	
+	            PrepareSensorRequestAN : PrepareSensorRequestAN {
+	                using pins :
+	                    biometricChoice : BiometricTypeEnum ;
+	            }
+	
+	            InterpretSensorReturnAN : InterpretSensorReturnAN {
+	                using pins :
+	                    sensorHttpInput : HTTPResponseDT ;
+	            }
+	
+	            BuildUserIdentificationReqAN : BuildUserIdentificationReqAN {
+	                using pins :
+	                    biometricRawInput : BiometricRawDT ;
+	            }
+	
+	            EvaluateBioServerResultAN : EvaluateBioServerResultAN {
+	                using pins :
+	                    bioServerHttpInput : HTTPResponseDT ;
+	            }
+	
+	            ManageProductSelectionAN : ManageProductSelectionAN {
+	                using pins :
+	                    productSelectionTrigger : Boolean ;
+	            }
+	
+	            ProcessProductChosenAN : ProcessProductChosenAN {
+	                using pins :
+	                    chosenProductInput : Int ;
+	            }
+	
+	            CreateOrderRequestAN : CreateOrderRequestAN {
+	                using pins :
+	                    identifiedUserInput : UserDT ;
+	                    selectedProductInput : Int ;
+	                    localMachineIdInput : Int ;
+	            }
+	
+	            SendOrderRequestAN : SendOrderRequestAN {
+	                using pins :
+	                    builtOrderReqInput : HTTPRequestDT ;
+	            }
+	
+	            GenerateDispenserCommandAN : GenerateDispenserCommandAN {
+	                using pins :
+	                    finalOrderResponseInput : HTTPResponseDT ;
+	            }
+	
+	        // ---- Ligações ----
+	
+	        // Ação 1
+	        flow from alwaysEnabledFlag to keepSelectionTrigger
+	
+	        // Ação 2
+	        delegate chosenBiometricType to biometricChoice
+	
+	        // Ação 3
+	        delegate sensorResponseIn to sensorHttpInput
+	
+	        // Ação 4
+	        delegate InterpretSensorReturnAN to biometricRawInput
+	
+	        // Ação 5
+	        delegate bioServerResponseIn to bioServerHttpInput
+	
+	        // Ação 6
+	        delegate EvaluateBioServerResultAN to productSelectionTrigger
+	
+	        // Ação 7
+	        delegate selectedProductId to chosenProductInput
+	
+	        // Ação 8
+	        delegate EvaluateBioServerResultAN to identifiedUserInput
+	        delegate ProcessProductChosenAN to selectedProductInput
+	        delegate machineLocalId to localMachineIdInput
+	
+	        // Ação 9
+	        delegate orderRequestOut to builtOrderReqInput
+	
+	        // Ação 10
+	        delegate orderServerResponseIn to finalOrderResponseInput
+	
+	        // Saídas
+	        delegate enableBiometricSelectionOut to MaintainBiometricSelectionAN
+	        delegate biometricSensorActiveOut to PrepareSensorRequestAN
+	        delegate sensorRequestOut to PrepareSensorRequestAN
+	        delegate identifyUserRequestOut to BuildUserIdentificationReqAN
+	        delegate orderRequestOut to CreateOrderRequestAN
+	        delegate dispenseCommand to GenerateDispenserCommandAN
+	
+	        datastore alwaysEnabledFlag : Boolean
+	        datastore biometricSelectionState : Boolean
+	        datastore machineLocalId : Int
+	    }
+	}
+	
+	action def MaintainBiometricSelectionAN ( keepSelectionTrigger : Boolean ) : Boolean {
+	    constraint :
+	        post-condition MaintainBiometricSelectionEQ
+	    delegate keepSelectionTrigger to keepSelectionTrigger
+	    delegate MaintainBiometricSelectionAN to outSelection
+	}
+	
+	action def PrepareSensorRequestAN ( biometricChoice : BiometricTypeEnum ) : HTTPRequestDT {
+	    constraint :
+	        post-condition PrepareSensorRequestEQ
+	    delegate biometricChoice to biometricChoice
+	    delegate PrepareSensorRequestAN to sensorReq
+	}
+	
+	action def InterpretSensorReturnAN ( sensorHttpInput : HTTPResponseDT ) : BiometricRawDT {
+	    constraint :
+	        post-condition InterpretSensorReturnEQ
+	    delegate sensorHttpInput to sensorHttpInput
+	    delegate InterpretSensorReturnAN to bioRawOut
+	}
+	
+	action def BuildUserIdentificationReqAN ( biometricRawInput : BiometricRawDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildUserIdentificationReqEQ
+	    delegate biometricRawInput to biometricRawInput
+	    delegate BuildUserIdentificationReqAN to identifyReq
+	}
+	
+	action def EvaluateBioServerResultAN ( bioServerHttpInput : HTTPResponseDT ) : UserDT {
+	    constraint :
+	        post-condition EvaluateBioServerResultEQ
+	    delegate bioServerHttpInput to bioServerHttpInput
+	    delegate EvaluateBioServerResultAN to userParsed
+	}
+	
+	action def ManageProductSelectionAN ( productSelectionTrigger : Boolean ) : Boolean {
+	    constraint :
+	        post-condition ManageProductSelectionEQ
+	    delegate productSelectionTrigger to productSelectionTrigger
+	    delegate ManageProductSelectionAN to allowProductSelection
+	}
+	
+	action def ProcessProductChosenAN ( chosenProductInput : Int ) : Int {
+	    constraint :
+	        post-condition ProcessProductChosenEQ
+	    delegate chosenProductInput to chosenProductInput
+	    delegate ProcessProductChosenAN to productOut
+	}
+	
+	action def CreateOrderRequestAN ( identifiedUserInput : UserDT,
+	                                  selectedProductInput : Int,
+	                                  localMachineIdInput : Int ) : HTTPRequestDT {
+	    constraint :
+	        post-condition CreateOrderRequestEQ
+	    delegate identifiedUserInput to identifiedUserInput
+	    delegate selectedProductInput to selectedProductInput
+	    delegate localMachineIdInput to localMachineIdInput
+	    delegate CreateOrderRequestAN to orderReqBuilt
+	}
+	
+	action def SendOrderRequestAN ( builtOrderReqInput : HTTPRequestDT ) : HTTPResponseDT {
+	    constraint :
+	        post-condition SendOrderRequestEQ
+	    delegate builtOrderReqInput to builtOrderReqInput
+	    delegate SendOrderRequestAN to orderResponseOut
+	}
+	
+	action def GenerateDispenserCommandAN ( finalOrderResponseInput : HTTPResponseDT ) : DispenserProductDT {
+	    constraint :
+	        post-condition GenerateDispenserCommandEQ
+	    delegate finalOrderResponseInput to finalOrderResponseInput
+	    delegate GenerateDispenserCommandAN to dispenserCmdOut
+	}
+	
+	constraint MaintainBiometricSelectionEQ ( keepSelectionTrigger : Boolean ) : ( outSelection : Boolean ) { }
+	constraint PrepareSensorRequestEQ ( biometricChoice : BiometricTypeEnum ) : ( sensorReq : HTTPRequestDT ) { }
+	constraint InterpretSensorReturnEQ ( sensorHttpInput : HTTPResponseDT ) : ( bioRawOut : BiometricRawDT ) { }
+	constraint BuildUserIdentificationReqEQ ( biometricRawInput : BiometricRawDT ) : ( identifyReq : HTTPRequestDT ) { }
+	constraint EvaluateBioServerResultEQ ( bioServerHttpInput : HTTPResponseDT ) : ( userParsed : UserDT ) { }
+	constraint ManageProductSelectionEQ ( productSelectionTrigger : Boolean ) : ( allowProductSelection : Boolean ) { }
+	constraint ProcessProductChosenEQ ( chosenProductInput : Int ) : ( productOut : Int ) { }
+	constraint CreateOrderRequestEQ ( identifiedUserInput : UserDT, selectedProductInput : Int, localMachineIdInput : Int ) : ( orderReqBuilt : HTTPRequestDT ) { }
+	constraint SendOrderRequestEQ ( builtOrderReqInput : HTTPRequestDT ) : ( orderResponseOut : HTTPResponseDT ) { }
+	constraint GenerateDispenserCommandEQ ( finalOrderResponseInput : HTTPResponseDT ) : ( dispenserCmdOut : DispenserProductDT ) { }
+	
+	activity def TapFlowControllerFlowAC (
+	    chosenBiometricType_In : BiometricTypeEnum
+	) (
+	    sensorResponse_In : HTTPResponseDT
+	) (
+	    bioServerResponse_In : HTTPResponseDT
+	) (
+	    productInfoResponse_In : HTTPResponseDT
+	) (
+	    tapDispensedAmount_In : Int
+	) (
+	    orderServerResponse_In : HTTPResponseDT
+	) : (
+	    biometricSelectionEnabled_Out : Boolean,
+	    biometricSensorActive_Out : Boolean,
+	    sensorRequest_Out : HTTPRequestDT,
+	    identifyUserRequest_Out : HTTPRequestDT,
+	    checkDebtsRequest_Out : HTTPRequestDT,
+	    requestProductInfo_Out : HTTPRequestDT,
+	    tapCommand_Out : Boolean,
+	    createOrderRequest_Out : HTTPRequestDT
+	) {
+	
+	    body {
+	        actions :
+	
+	            MaintainSelectionAN : MaintainSelectionAN {
+	                using pins :
+	                    selectionTrigger : Boolean ;
+	            }
+	
+	            PrepareSensorReqAN : PrepareSensorReqAN {
+	                using pins :
+	                    biometricInput : BiometricTypeEnum ;
+	            }
+	
+	            ParseSensorReturnAN : ParseSensorReturnAN {
+	                using pins :
+	                    sensorHttpIn : HTTPResponseDT ;
+	            }
+	
+	            BuildIdentifyReqAN : BuildIdentifyReqAN {
+	                using pins :
+	                    rawBioIn : BiometricRawDT ;
+	            }
+	
+	            ParseBioServerAN : ParseBioServerAN {
+	                using pins :
+	                    bioHttpIn : HTTPResponseDT ;
+	            }
+	
+	            BuildDebtCheckReqAN : BuildDebtCheckReqAN {
+	                using pins :
+	                    authenticatedUser : UserDT ;
+	            }
+	
+	            EvaluateDebtResponseAN : EvaluateDebtResponseAN {
+	                using pins :
+	                    debtHttpIn : HTTPResponseDT ;
+	            }
+	
+	            BuildProductInfoReqAN : BuildProductInfoReqAN {
+	                using pins :
+	                    triggerProductReq : Boolean ;
+	                    localMachineIdReq : Int ;
+	            }
+	
+	            ParseProductInfoAN : ParseProductInfoAN {
+	                using pins :
+	                    productHttpIn : HTTPResponseDT ;
+	            }
+	
+	            ActivateTapAN : ActivateTapAN {
+	                using pins :
+	                    productInfoIn : ProductDT ;
+	            }
+	
+	            BuildOrderCreationReqAN : BuildOrderCreationReqAN {
+	                using pins :
+	                    userOrderIn : UserDT ;
+	                    productOrderIn : ProductDT ;
+	                    amountIn : Int ;
+	                    tapMachineIdIn : Int ;
+	            }
+	
+	        flow from ALWAYS_TRUE to selectionTrigger
+	        delegate chosenBiometricType_In to biometricInput
+	        delegate sensorResponse_In to sensorHttpIn
+	        delegate ParseSensorReturnAN to rawBioIn
+	        delegate bioServerResponse_In to bioHttpIn
+	        delegate ParseBioServerAN to authenticatedUser
+	        delegate orderServerResponse_In to debtHttpIn
+	        delegate EvaluateDebtResponseAN to triggerProductReq
+	        delegate LOCAL_TAP_MACHINE_ID to localMachineIdReq
+	        delegate productInfoResponse_In to productHttpIn
+	        delegate ParseProductInfoAN to productInfoIn
+	        delegate ParseBioServerAN to userOrderIn
+	        delegate ParseProductInfoAN to productOrderIn
+	        delegate tapDispensedAmount_In to amountIn
+	        delegate LOCAL_TAP_MACHINE_ID to tapMachineIdIn
+	        delegate biometricSelectionEnabled_Out to MaintainSelectionAN
+	        delegate biometricSensorActive_Out to PrepareSensorReqAN
+	        delegate sensorRequest_Out to PrepareSensorReqAN
+	        delegate identifyUserRequest_Out to BuildIdentifyReqAN
+	        delegate checkDebtsRequest_Out to BuildDebtCheckReqAN
+	        delegate requestProductInfo_Out to BuildProductInfoReqAN
+	        delegate tapCommand_Out to ActivateTapAN
+	        delegate createOrderRequest_Out to BuildOrderCreationReqAN
+	
+	        datastore ALWAYS_TRUE : Boolean
+	        datastore LOCAL_TAP_MACHINE_ID : Int
+	    }
+	}
+	action def MaintainSelectionAN ( selectionTrigger : Boolean ) : Boolean {
+	    constraint :
+	        post-condition MaintainSelectionEQ
+	    delegate selectionTrigger to selectionTrigger
+	    delegate MaintainSelectionAN to selectionOut
+	}
+	
+	action def PrepareSensorReqAN ( biometricInput : BiometricTypeEnum ) : HTTPRequestDT {
+	    constraint :
+	        post-condition PrepareSensorReqEQ
+	    delegate biometricInput to biometricInput
+	    delegate PrepareSensorReqAN to reqOut
+	}
+	
+	action def ParseSensorReturnAN ( sensorHttpIn : HTTPResponseDT ) : BiometricRawDT {
+	    constraint :
+	        post-condition ParseSensorReturnEQ
+	    delegate sensorHttpIn to sensorHttpIn
+	    delegate ParseSensorReturnAN to rawOut
+	}
+	
+	action def BuildIdentifyReqAN ( rawBioIn : BiometricRawDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildIdentifyReqEQ
+	    delegate rawBioIn to rawBioIn
+	    delegate BuildIdentifyReqAN to reqOut
+	}
+	
+	action def ParseBioServerAN ( bioHttpIn : HTTPResponseDT ) : UserDT {
+	    constraint :
+	        post-condition ParseBioServerEQ
+	    delegate bioHttpIn to bioHttpIn
+	    delegate ParseBioServerAN to userOut
+	}
+	
+	action def BuildDebtCheckReqAN ( authenticatedUser : UserDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildDebtCheckReqEQ
+	    delegate authenticatedUser to authenticatedUser
+	    delegate BuildDebtCheckReqAN to reqOut
+	}
+	
+	action def EvaluateDebtResponseAN ( debtHttpIn : HTTPResponseDT ) : Boolean {
+	    constraint :
+	        post-condition EvaluateDebtResponseEQ
+	    delegate debtHttpIn to debtHttpIn
+	    delegate EvaluateDebtResponseAN to allowOut
+	}
+	
+	action def BuildProductInfoReqAN ( triggerProductReq : Boolean, localMachineIdReq : Int ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildProductInfoReqEQ
+	    delegate triggerProductReq to triggerProductReq
+	    delegate localMachineIdReq to localMachineIdReq
+	    delegate BuildProductInfoReqAN to reqOut
+	}
+	
+	action def ParseProductInfoAN ( productHttpIn : HTTPResponseDT ) : ProductDT {
+	    constraint :
+	        post-condition ParseProductInfoEQ
+	    delegate productHttpIn to productHttpIn
+	    delegate ParseProductInfoAN to productOut
+	}
+	
+	action def ActivateTapAN ( productInfoIn : ProductDT ) : Boolean {
+	    constraint :
+	        post-condition ActivateTapEQ
+	    delegate productInfoIn to productInfoIn
+	    delegate ActivateTapAN to activateOut
+	}
+	
+	action def BuildOrderCreationReqAN (
+	    userOrderIn : UserDT,
+	    productOrderIn : ProductDT,
+	    amountIn : Int,
+	    tapMachineIdIn : Int
+	) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildOrderCreationReqEQ
+	    delegate userOrderIn to userOrderIn
+	    delegate productOrderIn to productOrderIn
+	    delegate amountIn to amountIn
+	    delegate tapMachineIdIn to tapMachineIdIn
+	    delegate BuildOrderCreationReqAN to reqOut
+	}
+	
+	constraint MaintainSelectionEQ ( selectionTrigger : Boolean ) : ( selectionOut : Boolean ) { }
+	constraint PrepareSensorReqEQ ( biometricInput : BiometricTypeEnum ) : ( reqOut : HTTPRequestDT ) { }
+	constraint ParseSensorReturnEQ ( sensorHttpIn : HTTPResponseDT ) : ( rawOut : BiometricRawDT ) { }
+	constraint BuildIdentifyReqEQ ( rawBioIn : BiometricRawDT ) : ( reqOut : HTTPRequestDT ) { }
+	constraint ParseBioServerEQ ( bioHttpIn : HTTPResponseDT ) : ( userOut : UserDT ) { }
+	constraint BuildDebtCheckReqEQ ( authenticatedUser : UserDT ) : ( reqOut : HTTPRequestDT ) { }
+	constraint EvaluateDebtResponseEQ ( debtHttpIn : HTTPResponseDT ) : ( allowOut : Boolean ) { }
+	constraint BuildProductInfoReqEQ ( triggerProductReq : Boolean, localMachineIdReq : Int ) : ( reqOut : HTTPRequestDT ) { }
+	constraint ParseProductInfoEQ ( productHttpIn : HTTPResponseDT ) : ( productOut : ProductDT ) { }
+	constraint ActivateTapEQ ( productInfoIn : ProductDT ) : ( activateOut : Boolean ) { }
+	constraint BuildOrderCreationReqEQ (
+	    userOrderIn : UserDT,
+	    productOrderIn : ProductDT,
+	    amountIn : Int,
+	    tapMachineIdIn : Int
+	) : ( reqOut : HTTPRequestDT ) { }
+	
+	activity def TotemFlowControllerAC (
+	    sensorInputTotem : HTTPResponseDT
+	)(
+	    selectedBioTypeTotem : BiometricTypeEnum
+	)(
+	    bioServerResponseTotem : HTTPResponseDT
+	)(
+	    productServerResponseTotem : HTTPResponseDT
+	)(
+	    selectedProductsIn : OrderItemArrayDT
+	)(
+	    orderServerResponseTotem : HTTPResponseDT
+	) : (
+	    enableDisplayOut : Boolean,
+	    activateBiometricSelectionOut : Boolean,
+	    sensorRequestOut : HTTPRequestDT,
+	    identifyUserReqOut : HTTPRequestDT,
+	    productListReqOut : HTTPRequestDT,
+	    orderCreateReqOut : HTTPRequestDT,
+	    orderToPrintOut : OrderDT
+	) {
+	    body {
+	        actions :
+	            KeepBiometricSelectionAN : KeepBiometricSelectionAN {
+	                using pins :
+	                    trigSelect : Boolean ;
+	            }
+	
+	            BuildSensorReqAN : BuildSensorReqAN {
+	                using pins :
+	                    bioTypeInput : BiometricTypeEnum ;
+	            }
+	
+	            ExtractBiometricRawAN : ExtractBiometricRawAN {
+	                using pins :
+	                    sensorHttpIn : HTTPResponseDT ;
+	            }
+	
+	            BuildIdentifyUserReqTAN : BuildIdentifyUserReqTAN {
+	                using pins :
+	                    rawBioInput : BiometricRawDT ;
+	            }
+	
+	            InterpretUserInfoAN : InterpretUserInfoAN {
+	                using pins :
+	                    bioHttpIn : HTTPResponseDT ;
+	            }
+	
+	            BuildProductListReqAN : BuildProductListReqAN {
+	                using pins :
+	                    machineIdInput : Int ;
+	            }
+	
+	            EnableDisplayAN : EnableDisplayAN {
+	                using pins :
+	                    displayTrigger : Boolean ;
+	            }
+	
+	            ProcessSelectedProductsAN : ProcessSelectedProductsAN {
+	                using pins :
+	                    selectedArrayIn : OrderItemArrayDT ;
+	            }
+	
+	            BuildOrderCreateReqAN : BuildOrderCreateReqAN {
+	                using pins :
+	                    userInfoInput : UserDT ;
+	                    chosenItemsInput : OrderItemArrayDT ;
+	            }
+	
+	            ExtractOrderToPrintAN : ExtractOrderToPrintAN {
+	                using pins :
+	                    httpOrderRespIn : HTTPResponseDT ;
+	            }
+	
+	        flow from alwaysEnabledFlag to trigSelect
+	        delegate selectedBioTypeTotem to bioTypeInput
+	        delegate sensorInputTotem to sensorHttpIn
+	        delegate ExtractBiometricRawAN to rawBioInput
+	        delegate bioServerResponseTotem to bioHttpIn
+	
+	        delegate InterpretUserInfoAN to displayTrigger
+	        delegate machineLocalId to machineIdInput
+	
+	        delegate selectedProductsIn to selectedArrayIn
+	        delegate ProcessSelectedProductsAN to chosenItemsInput
+	        delegate InterpretUserInfoAN to userInfoInput
+	
+	        delegate productListReqOut to BuildProductListReqAN
+	        delegate sensorRequestOut to BuildSensorReqAN
+	        delegate identifyUserReqOut to BuildIdentifyUserReqAN
+	        delegate enableDisplayOut to EnableDisplayAN
+	        delegate activateBiometricSelectionOut to KeepBiometricSelectionAN
+	        delegate orderCreateReqOut to BuildOrderCreateReqAN
+	
+	        delegate orderServerResponseTotem to httpOrderRespIn
+	        delegate orderToPrintOut to ExtractOrderToPrintAN
+	
+	        datastore alwaysEnabledFlag : Boolean
+	        datastore machineLocalId : Int
+	    }
+	}
+	
+	action def KeepBiometricSelectionAN ( trigSelect : Boolean ) : Boolean {
+	    constraint :
+	        post-condition KeepBiometricSelectionEQ
+	    delegate trigSelect to trigSelect
+	    delegate KeepBiometricSelectionAN to selectOut
+	}
+	
+	action def BuildSensorReqAN ( bioTypeInput : BiometricTypeEnum ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildSensorReqEQ
+	    delegate bioTypeInput to bioTypeInput
+	    delegate BuildSensorReqAN to sensorReq
+	}
+	
+	action def ExtractBiometricRawAN ( sensorHttpIn : HTTPResponseDT ) : BiometricRawDT {
+	    constraint :
+	        post-condition ExtractBiometricRawEQ
+	    delegate sensorHttpIn to sensorHttpIn
+	    delegate ExtractBiometricRawAN to rawOut
+	}
+	
+	action def BuildIdentifyUserReqTAN ( rawBioInput : BiometricRawDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildIdentifyUserReqTEQ
+	    delegate rawBioInput to rawBioInput
+	    delegate BuildIdentifyUserReqTAN to idReq
+	}
+	
+	action def InterpretUserInfoAN ( bioHttpIn : HTTPResponseDT ) : UserDT {
+	    constraint :
+	        post-condition InterpretUserInfoEQ
+	    delegate bioHttpIn to bioHttpIn
+	    delegate InterpretUserInfoAN to userOut
+	}
+	
+	action def BuildProductListReqAN ( machineIdInput : Int ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildProductListReqEQ
+	    delegate machineIdInput to machineIdInput
+	    delegate BuildProductListReqAN to prodReq
+	}
+	
+	action def EnableDisplayAN ( displayTrigger : Boolean ) : Boolean {
+	    constraint :
+	        post-condition EnableDisplayEQ
+	    delegate displayTrigger to displayTrigger
+	    delegate EnableDisplayAN to displayOut
+	}
+	
+	action def ProcessSelectedProductsAN ( selectedArrayIn : OrderItemArrayDT ) : OrderItemArrayDT {
+	    constraint :
+	        post-condition ProcessSelectedProductsEQ
+	    delegate selectedArrayIn to selectedArrayIn
+	    delegate ProcessSelectedProductsAN to selectedOut
+	}
+	
+	action def BuildOrderCreateReqAN ( userInfoInput : UserDT,
+	                                   chosenItemsInput : OrderItemArrayDT ) : HTTPRequestDT {
+	    constraint :
+	        post-condition BuildOrderCreateReqEQ
+	    delegate userInfoInput to userInfoInput
+	    delegate chosenItemsInput to chosenItemsInput
+	    delegate BuildOrderCreateReqAN to buildReq
+	}
+	
+	action def ExtractOrderToPrintAN ( httpOrderRespIn : HTTPResponseDT ) : OrderDT {
+	    constraint :
+	        post-condition ExtractOrderToPrintEQ
+	    delegate httpOrderRespIn to httpOrderRespIn
+	    delegate ExtractOrderToPrintAN to printedOrder
+	}
+	
+	constraint KeepBiometricSelectionEQ ( trigSelect : Boolean ) : ( selectOut : Boolean ) { }
+	constraint BuildSensorReqEQ ( bioTypeInput : BiometricTypeEnum ) : ( sensorReq : HTTPRequestDT ) { }
+	constraint ExtractBiometricRawEQ ( sensorHttpIn : HTTPResponseDT ) : ( rawOut : BiometricRawDT ) { }
+	constraint BuildIdentifyUserReqTEQ ( rawBioInput : BiometricRawDT ) : ( idReq : HTTPRequestDT ) { }
+	constraint InterpretUserInfoEQ ( bioHttpIn : HTTPResponseDT ) : ( userOut : UserDT ) { }
+	constraint BuildProductListReqEQ ( machineIdInput : Int ) : ( prodReq : HTTPRequestDT ) { }
+	constraint EnableDisplayEQ ( displayTrigger : Boolean ) : ( displayOut : Boolean ) { }
+	constraint ProcessSelectedProductsEQ ( selectedArrayIn : OrderItemArrayDT ) : ( selectedOut : OrderItemArrayDT ) { }
+	constraint BuildOrderCreateReqEQ ( userInfoInput : UserDT, chosenItemsInput : OrderItemArrayDT ) : ( buildReq : HTTPRequestDT ) { }
+	constraint ExtractOrderToPrintEQ ( httpOrderRespIn : HTTPResponseDT ) : ( printedOrder : OrderDT ) { }
 } 
 
 package FoodFastPorts { 
